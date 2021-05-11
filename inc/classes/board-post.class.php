@@ -505,13 +505,6 @@ class Board {
 		$debug_str = "#".$op_id." from /".$this->board['name']."/ (".$this->board['desc']."): ";
 
 		// fill thread stats →
-		/*$stats = $tc_db->GetAll("SELECT
-			COUNT(DISTINCT `id`) `reply_count`,
-			SUM(CASE WHEN `file_md5` != '' THEN 1 ELSE 0 END) `images`
-		FROM `".KU_DBPREFIX."postembeds`
-		WHERE `boardid` = '". $this->board['id'] ." '
-			AND `IS_DELETED` = 0
-			AND `parentid` = '". $op_id ."'");*/
 		$stats = $tc_db->GetAll("SELECT
 			COUNT(DISTINCT `id`) `reply_count`,
 			SUM(CASE WHEN `file_md5` != '' THEN 1 ELSE 0 END) `images`
@@ -523,7 +516,7 @@ class Board {
 		// ← fill thread stats
 
 		// Get OP + last posts to render →
-		/*$posts = $tc_db->GetAll(
+		$posts = $tc_db->GetAll(
 			"SELECT * FROM `".KU_DBPREFIX."postembeds`
 			JOIN (
 				SELECT 
@@ -537,23 +530,7 @@ class Board {
 				ORDER BY `is_op` DESC, `id` DESC
 				LIMIT ".(KU_REPLIES+1)."
 			) `uniq_id` 
-			ON `postembeds`.`id` = `uniq_id`.`id`
-			WHERE `boardid` = '". $this->board['id'] ."'
-			ORDER BY `uniq_id`.`id` ASC");*/
-		$posts = $tc_db->GetAll(
-			"SELECT * FROM `".KU_DBPREFIX."postembeds`
-			JOIN (
-				SELECT 
-					`id`, 
-					(CASE WHEN `parentid`='0' THEN 1 ELSE 0 END) `is_op`
-				FROM `".KU_DBPREFIX."posts`
-				WHERE 
-					`boardid` = '". $this->board['id'] ."' 
-					AND (`id`='". $op_id ."' OR `parentid` = '". $op_id ."')
-				ORDER BY `is_op` DESC, `id` DESC
-				LIMIT ".(KU_REPLIES+1)."
-			) `uniq_id` 
-			ON `postembeds`.`id` = `uniq_id`.`id`
+			ON `".KU_DBPREFIX."postembeds`.`id` = `uniq_id`.`id`
 			WHERE `boardid` = '". $this->board['id'] ."'
 			ORDER BY `uniq_id`.`id` ASC");
 		$posts = group_embeds($posts, true);
@@ -564,11 +541,11 @@ class Board {
 
 		// Calculate omitted posts and images →
 		$images_shown = 0;
-		$i = 0; foreach ($posts as &$post) {
+		$i = 0;
+		foreach ($posts as &$post) {
 			if ($i == 0) { // OP
 
-			}
-			else { // reply
+			} else { // reply
 				foreach($post['embeds'] as $embed) {
 					if ($embed['file_md5'] != '') {
 						$images_shown++;
@@ -576,7 +553,9 @@ class Board {
 				}
 			}
 			$post = $this->BuildPost($post, true);
-		$i++; }unset($post);
+			$i++;
+		}
+		unset($post);
 		$omitted_replies = $posts[0]['reply_count'] - (count($posts) - 1);
 		if ($omitted_replies < 0) $omitted_replies = 0;
 		$omitted_images = $posts[0]['images'] - $images_shown;
