@@ -99,7 +99,8 @@ if (isset($_GET['graph'])) {
 				if (count($results) > 0) {
 					$data = array();
 					foreach ($results as $line) {
-						$posts = $tc_db->GetOne("SELECT COUNT(DISTINCT `ipmd5`) FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $line['id'] . " AND `IS_DELETED` = 0");
+						//$posts = $tc_db->GetOne("SELECT COUNT(DISTINCT `ipmd5`) FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $line['id'] . " AND `IS_DELETED` = 0");
+						$posts = $tc_db->GetOne("SELECT COUNT(DISTINCT `ipmd5`) FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $line['id']);
 
 						$data = array_merge($data, array($line['name'] => $posts));
 					}

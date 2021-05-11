@@ -57,7 +57,7 @@ if (!$cache_loaded) {
 		$cf['KU_20_CLOUDTIME'] = "-24 hours";
 		$cf['KU_20MAXLOGINPASS'] = 50; // Maximum login and password size for 2.0
 		$cf['KU_SUPPORTED_LOCALES'] = 'ru|en';	//
-		$cf['KU_FFMPEGPATH'] = '/usr/local/bin/ffmpeg'; //path to FFMPEG, for example 'C:\ffmpeg\bin'
+		$cf['KU_FFMPEGPATH'] = '/usr/local/bin/'; //path to FFMPEG, for example 'C:\ffmpeg\bin'
 		$cf['KU_MAXNAMELENGTH'] = 75;
 		$cf['KU_MAXEMAILLENGTH'] = 4; 	// do we need more?
 		$cf['KU_MAXSUBJLENGTH'] = 75;
@@ -275,6 +275,9 @@ if (!isset($tc_db) && !isset($preconfig_db_unnecessary) && !$_GLOBALS['skipdb'])
 	// SQL debug
 	if (KU_DEBUG) {
 		$tc_db->debug = true;
+		ini_set('display_errors', 1);
+		ini_set('display_startup_errors', 1);
+		error_reporting(E_ALL);
 	}
 
 	$results_events = $tc_db->GetAll("SELECT * FROM `" . KU_DBPREFIX . "events` WHERE `at` <= " . time());

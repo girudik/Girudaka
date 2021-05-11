@@ -621,7 +621,7 @@ img.latex, object.latex  {
 .prettyprint, .code_part {
   overflow: auto;
   max-height: 330px;
-  max-height: 33vh;
+  /*max-height: 33vh;*/
   min-width: 50%;
   background: rgba(255, 255, 255, 0.62);
   text-shadow: none;
@@ -2157,7 +2157,7 @@ figure > a {
 }
 .reply:not(.reply-expanded) .postbody:not(.postbody-expanded) {
   max-height: 500px;
-  max-height: 50vh;
+  /*max-height: 50vh;*/
   overflow: auto;
 }
 .postbody-expanded {
@@ -3855,4 +3855,32 @@ input[name=postpassword] + div {
   padding: 0 3px;
   border-radius: 4px;
   text-decoration: none;
+}
+
+/* bin stuff (deleted threads, posts) */
+details {
+	display: inline-block;
+  vertical-align: top;
+  margin-bottom: 10px;
+}
+details[open] {
+	background: #ff000026;
+	padding: 2px 4px 0 0px;
+	border-radius: 4px;
+}
+summary.deleted {
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+	cursor: pointer;
+	margin: 0;
+	background-image: url(/css/icons/deleted.svg);
+	width: 1.1em;
+	height: 1.1em;
+	background-repeat: no-repeat;
+	background-size: contain;
+	list-style: none;
+}
+.deleted_thread {
+	color: red;
 }

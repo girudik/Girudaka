@@ -507,11 +507,15 @@ class Upload {
 
 					$attachment['file_type'] = '.' . $attachment['embedtype'];
 
-					$results = $tc_db->GetOne("SELECT COUNT(*)
+					/*$results = $tc_db->GetOne("SELECT COUNT(*)
 						FROM `" . KU_DBPREFIX . "postembeds`
 						WHERE `boardid` = " . $board_class->board['id'] . "
 						AND `file` = " . $tc_db->qstr($video_id) . "
-						AND `IS_DELETED` = 0");
+						AND `IS_DELETED` = 0");*/
+					$results = $tc_db->GetOne("SELECT COUNT(*)
+						FROM `" . KU_DBPREFIX . "postembeds`
+						WHERE `boardid` = " . $board_class->board['id'] . "
+						AND `file` = " . $tc_db->qstr($video_id));
 					if ($results == 0) {
 						/*$thumbw = $this->isreply ? KU_REPLYTHUMBWIDTH : KU_THUMBWIDTH;
 						$thumbh = $this->isreply ? KU_REPLYTHUMBHEIGHT : KU_THUMBHEIGHT;*/
@@ -558,11 +562,16 @@ class Upload {
 						$attachment['file_size_formatted'] = $video_data['duration'];
 					}
 					else {
-						$results = $tc_db->GetAll("SELECT `id`,`parentid`
+						/*$results = $tc_db->GetAll("SELECT `id`,`parentid`
 							FROM `" . KU_DBPREFIX . "postembeds`
 							WHERE `boardid` = " . $board_class->board['id'] . "
 							AND `file` = " . $tc_db->qstr($video_id) . "
 							AND `IS_DELETED` = 0
+							LIMIT 1");*/
+						$results = $tc_db->GetAll("SELECT `id`,`parentid`
+							FROM `" . KU_DBPREFIX . "postembeds`
+							WHERE `boardid` = " . $board_class->board['id'] . "
+							AND `file` = " . $tc_db->qstr($video_id) . "
 							LIMIT 1");
 						foreach ($results as $line) {
 							$real_threadid = ($line[1] == 0) ? $line[0] : $line[1];

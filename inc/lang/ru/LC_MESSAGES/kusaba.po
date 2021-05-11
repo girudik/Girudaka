@@ -1043,7 +1043,7 @@ msgid "Section updated."
 msgstr "Секция обновлена."
 
 msgid "Send Appeal"
-msgstr "Отправить жалобу"
+msgstr "Пожаловаться"
 
 msgid "Show All"
 msgstr "Показать все"

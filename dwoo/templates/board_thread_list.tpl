@@ -9,8 +9,12 @@
 				<svg class="icon b-icon"><use xlink:href="#i-unhide"></use></svg>
 			</a>
 	</span>
-	
-	<div id="thread{$post.id}{$board.name}">
+	{if $post.IS_DELETED}
+	{$thread_deleted = 1}
+	<details class="deleted">
+		<summary class="deleted" title="Тред удалён"></summary>
+	{/if}
+	<div id="thread{$post.id}{$board.name}" class="deleted_{$post.IS_DELETED}">
 	<div class="postnode op">
 	<script type="text/javascript"><!--
 		if (localStorage['hiddenThreads.' + '{$board.name}'] && in_array('{$post.id}', localStorage['hiddenThreads.' + '{$board.name}'].split(',') ) ) {
@@ -175,7 +179,12 @@
 			{/if}
 			<br />
 		{else}
-			<table class="postnode">
+			{if $post.IS_DELETED}
+			{$post_deleted = 1}
+			<details class="deleted">
+				<summary class="deleted" title="Пост удалён"></summary>
+			{/if}
+			<table class="postnode deleted_{$post.IS_DELETED}">
 				<tbody>
 				<tr>
 					<td class="doubledash">
@@ -347,7 +356,7 @@
 		{/if}
 		{if $post.parentid eq 0}
 		</div>
-			<div id="replies{$post.id}{$board.name}" class="replies">
+			<div id="replies{$post.id}{$board.name}" class="replies deleted_{$post.IS_DELETED}">
 			{if $post.replies}
 				<span class="omittedposts">
 				{if %KU_EXPAND}<a href="{%KU_BOARDSFOLDER}{$board.name}/res/{if $post.parentid eq 0}{$post.id}{else}{$post.parentid}{/if}.html" onclick="return expandthread('{if $post.parentid eq 0}{$post.id}{else}{$post.parentid}{/if}','{$board.name}', event)" title="{t}Expand Thread{/t}">{/if}
@@ -380,16 +389,32 @@
 					{t}omitted{/t}.{/if}{if %KU_EXPAND}</a>{/if}
 					</span>
 				{/if}
+			{if $thread_deleted}
+			</details>
+			{/if}
 			{else}
 				</td>
 			</tr>
 		</tbody>
 		</table>
-		
+		{if $post_deleted}
+		{$post_deleted = 0}
+		</details>
+		{/if}
 		{/if}
 	{/foreach}
 			</div>
 			</div>
+
+		{if $thread_deleted}
+		<br clear="left deleted" />
+		<hr class="deleted" />
+		{else}
 		<br clear="left" />
 		<hr />
+		{/if}
+		{if $thread_deleted}
+			{$thread_deleted = 0}
+		{/if}
+
 {/foreach}

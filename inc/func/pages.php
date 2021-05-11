@@ -46,8 +46,14 @@ function RegenerateOverboard($boardlist=null) {
 	$over_board_class->dwoo_data->assign('for_overboard', 1);
 	$header = $over_board_class->PageHeader(0,0,-1,0, true);
 
-	$threads = $tc_db->GetAll("SELECT `latest_threads`.`id`, `visible_boards`.`boardname` FROM
+	/*$threads = $tc_db->GetAll("SELECT `latest_threads`.`id`, `visible_boards`.`boardname` FROM
 		(SELECT `id`,`boardid`,`bumped` FROM `".KU_DBPREFIX."posts` WHERE `parentid`='0' AND `IS_DELETED`!='1') `latest_threads`
+		INNER JOIN(SELECT `name` AS `boardname`, `id` AS `boardid` FROM `".KU_DBPREFIX."boards` WHERE `hidden`!='1' AND `section`!='0') `visible_boards` 
+		ON `latest_threads`.`boardid` = `visible_boards`.`boardid`
+		ORDER BY `latest_threads`.`bumped` DESC
+		LIMIT $total_threads");*/
+	$threads = $tc_db->GetAll("SELECT `latest_threads`.`id`, `visible_boards`.`boardname` FROM
+		(SELECT `id`,`boardid`,`bumped` FROM `".KU_DBPREFIX."posts` WHERE `parentid`='0') `latest_threads`
 		INNER JOIN(SELECT `name` AS `boardname`, `id` AS `boardid` FROM `".KU_DBPREFIX."boards` WHERE `hidden`!='1' AND `section`!='0') `visible_boards` 
 		ON `latest_threads`.`boardid` = `visible_boards`.`boardid`
 		ORDER BY `latest_threads`.`bumped` DESC

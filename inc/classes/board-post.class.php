@@ -89,7 +89,8 @@ class Board {
 					$this->board['boardlist'] = $this->DisplayBoardList();
 
 					// Get the unique posts for this board
-					$this->board['uniqueposts']   = $tc_db->GetOne("SELECT COUNT(DISTINCT `ipmd5`) FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $this->board['id']. " AND  `IS_DELETED` = 0");
+					//$this->board['uniqueposts']   = $tc_db->GetOne("SELECT COUNT(DISTINCT `ipmd5`) FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $this->board['id']. " AND  `IS_DELETED` = 0");
+					$this->board['uniqueposts']   = $tc_db->GetOne("SELECT COUNT(DISTINCT `ipmd5`) FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $this->board['id']);
 					
 					if ($this->board['locale'] && $this->board['locale'] != KU_LOCALE) {
 						changeLocale($this->board['locale']);
@@ -157,13 +158,22 @@ class Board {
 		global $tc_db;
 		$tc_db->SetFetchMode(ADODB_FETCH_ASSOC);
 
-		$threads = $tc_db->GetAll("SELECT 
+		// TODO: smart exclude deleted threads
+		/*$threads = $tc_db->GetAll("SELECT 
 			(`id`='".$threadid."') AS `the_one`
 			FROM `".KU_DBPREFIX."posts` 
 			WHERE
 			 `boardid`='".$this->board['id']."'
 			 AND
 			 `IS_DELETED`=0
+			 AND
+			 `parentid`=0
+			ORDER BY `bumped` DESC");*/
+		$threads = $tc_db->GetAll("SELECT 
+			(`id`='".$threadid."') AS `the_one`
+			FROM `".KU_DBPREFIX."posts` 
+			WHERE
+			 `boardid`='".$this->board['id']."'
 			 AND
 			 `parentid`=0
 			ORDER BY `bumped` DESC");
@@ -192,11 +202,16 @@ class Board {
 
 		$maxpages = $this->board['maxpages'];
 
-		$threads = $tc_db->GetAll("SELECT *
+		/*$threads = $tc_db->GetAll("SELECT *
 			FROM `" . KU_DBPREFIX . "postembeds`
 			WHERE `boardid` = " . $this->board['id'] . "
 			AND `parentid` = 0
 			AND `IS_DELETED` = 0
+			ORDER BY `stickied` DESC, `bumped` DESC");*/
+		$threads = $tc_db->GetAll("SELECT *
+			FROM `" . KU_DBPREFIX . "postembeds`
+			WHERE `boardid` = " . $this->board['id'] . "
+			AND `parentid` = 0
 			ORDER BY `stickied` DESC, `bumped` DESC");
 		$threads = group_embeds($threads, true);
 		$total_threads = count($threads);
@@ -209,7 +224,7 @@ class Board {
 
 			// fill thread stats →
 			$threads[$i]['page'] = $current_page;
-			$stats = $tc_db->GetAll("SELECT
+			/*$stats = $tc_db->GetAll("SELECT
 				COUNT(DISTINCT `id`) `reply_count`,
 				MAX(`timestamp`) `replied`,
 				MAX(`id`) `last_reply`,
@@ -217,6 +232,14 @@ class Board {
 			FROM `".KU_DBPREFIX."postembeds`
 			WHERE `boardid` = '". $this->board['id'] ." '
 				AND `IS_DELETED` = 0
+				AND `parentid` = '". $threads[$i]['id'] ."'");*/
+			$stats = $tc_db->GetAll("SELECT
+				COUNT(DISTINCT `id`) `reply_count`,
+				MAX(`timestamp`) `replied`,
+				MAX(`id`) `last_reply`,
+				SUM(CASE WHEN `file_md5` != '' THEN 1 ELSE 0 END) `images`
+			FROM `".KU_DBPREFIX."postembeds`
+			WHERE `boardid` = '". $this->board['id'] ." '
 				AND `parentid` = '". $threads[$i]['id'] ."'");
 			$stats = $stats[0];
 			$threads[$i]['reply_count'] = $stats['reply_count'];
@@ -254,13 +277,25 @@ class Board {
 				$this->dwoo_data->assign('thispage', $page);
 				foreach ($pagethreads as $thread) {
 					// Get last posts to render →
-					$posts = $tc_db->GetAll("SELECT * FROM `".KU_DBPREFIX."postembeds`
+					/*$posts = $tc_db->GetAll("SELECT * FROM `".KU_DBPREFIX."postembeds`
 						JOIN (
 							SELECT DISTINCT `id`
 							FROM `".KU_DBPREFIX."postembeds`
 							WHERE `boardid` = '". $this->board['id'] ." '
 								AND `parentid` = ".$thread['id']." 
 								AND `IS_DELETED` = 0
+							ORDER BY `id` DESC
+							LIMIT ".(($thread['stickied'] == 1) ? (KU_REPLIESSTICKY) : (KU_REPLIES))."
+						) `uniq_id` 
+						ON `".KU_DBPREFIX."postembeds`.`id` = `uniq_id`.`id`
+						WHERE `boardid` = '". $this->board['id'] ." '
+						ORDER BY `uniq_id`.`id` desc");*/
+					$posts = $tc_db->GetAll("SELECT * FROM `".KU_DBPREFIX."postembeds`
+						JOIN (
+							SELECT DISTINCT `id`
+							FROM `".KU_DBPREFIX."postembeds`
+							WHERE `boardid` = '". $this->board['id'] ." '
+								AND `parentid` = ".$thread['id']." 
 							ORDER BY `id` DESC
 							LIMIT ".(($thread['stickied'] == 1) ? (KU_REPLIESSTICKY) : (KU_REPLIES))."
 						) `uniq_id` 
@@ -470,6 +505,13 @@ class Board {
 		$debug_str = "#".$op_id." from /".$this->board['name']."/ (".$this->board['desc']."): ";
 
 		// fill thread stats →
+		/*$stats = $tc_db->GetAll("SELECT
+			COUNT(DISTINCT `id`) `reply_count`,
+			SUM(CASE WHEN `file_md5` != '' THEN 1 ELSE 0 END) `images`
+		FROM `".KU_DBPREFIX."postembeds`
+		WHERE `boardid` = '". $this->board['id'] ." '
+			AND `IS_DELETED` = 0
+			AND `parentid` = '". $op_id ."'");*/
 		$stats = $tc_db->GetAll("SELECT
 			COUNT(DISTINCT `id`) `reply_count`,
 			SUM(CASE WHEN `file_md5` != '' THEN 1 ELSE 0 END) `images`
@@ -481,7 +523,7 @@ class Board {
 		// ← fill thread stats
 
 		// Get OP + last posts to render →
-		$posts = $tc_db->GetAll(
+		/*$posts = $tc_db->GetAll(
 			"SELECT * FROM `".KU_DBPREFIX."postembeds`
 			JOIN (
 				SELECT 
@@ -492,6 +534,22 @@ class Board {
 					`boardid` = '". $this->board['id'] ."' 
 					AND (`id`='". $op_id ."' OR `parentid` = '". $op_id ."')
 					AND `IS_DELETED` = 0
+				ORDER BY `is_op` DESC, `id` DESC
+				LIMIT ".(KU_REPLIES+1)."
+			) `uniq_id` 
+			ON `postembeds`.`id` = `uniq_id`.`id`
+			WHERE `boardid` = '". $this->board['id'] ."'
+			ORDER BY `uniq_id`.`id` ASC");*/
+		$posts = $tc_db->GetAll(
+			"SELECT * FROM `".KU_DBPREFIX."postembeds`
+			JOIN (
+				SELECT 
+					`id`, 
+					(CASE WHEN `parentid`='0' THEN 1 ELSE 0 END) `is_op`
+				FROM `".KU_DBPREFIX."posts`
+				WHERE 
+					`boardid` = '". $this->board['id'] ."' 
+					AND (`id`='". $op_id ."' OR `parentid` = '". $op_id ."')
 				ORDER BY `is_op` DESC, `id` DESC
 				LIMIT ".(KU_REPLIES+1)."
 			) `uniq_id` 
@@ -560,7 +618,8 @@ class Board {
 			// Build every thread
 			$header = $this->PageHeader(1);
 			$postbox = $this->Postbox(1);
-			$threads = $tc_db->GetAll("SELECT `id` FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $this->board['id'] . " AND `parentid` = 0 AND `IS_DELETED` = 0 ORDER BY `id` DESC");
+			//$threads = $tc_db->GetAll("SELECT `id` FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $this->board['id'] . " AND `parentid` = 0 AND `IS_DELETED` = 0 ORDER BY `id` DESC");
+			$threads = $tc_db->GetAll("SELECT `id` FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $this->board['id'] . " AND `parentid` = 0 ORDER BY `id` DESC");
 			if (count($threads) > 0) {
 				foreach($threads as $thread) {
 					$this->BuildThread($thread['id'], $header, $postbox);
@@ -577,7 +636,8 @@ class Board {
 
 		$numimages = 0;
 		$executiontime_start_thread = microtime_float();
-		$posts = $tc_db->GetAll("SELECT * FROM `" . KU_DBPREFIX . "postembeds` WHERE `boardid` = " . $this->board['id'] . " AND (`id` = " . $id . " OR `parentid` = " . $id . ") AND `IS_DELETED` = 0 ORDER BY `id` ASC");
+		//$posts = $tc_db->GetAll("SELECT * FROM `" . KU_DBPREFIX . "postembeds` WHERE `boardid` = " . $this->board['id'] . " AND (`id` = " . $id . " OR `parentid` = " . $id . ") AND `IS_DELETED` = 0 ORDER BY `id` ASC");
+		$posts = $tc_db->GetAll("SELECT * FROM `" . KU_DBPREFIX . "postembeds` WHERE `boardid` = " . $this->board['id'] . " AND (`id` = " . $id . " OR `parentid` = " . $id . ") ORDER BY `id` ASC");
 		// There might be a chance that the post was deleted during another RegenerateThreads() session, if there are no posts, move on to the next thread.
 		if (count($posts) > 0) {
 			$posts = group_embeds($posts, true);
@@ -934,7 +994,12 @@ class Board {
 		$files = GetFileAndThumbs($file);
 		$boardname = $this->board['name'];
 		foreach($files as $f) {
-			@unlink(KU_BOARDSDIR.$boardname.$f);
+			//@unlink(KU_BOARDSDIR.$boardname.$f);
+			$path_img = KU_BOARDSDIR.$boardname.$f;
+			$path_img_del = KU_BOARDSDIR.$boardname. '/deleted/' .$f;
+			@mkdir(pathinfo($path_img_del, PATHINFO_DIRNAME), 0755, true);
+			@copy($path_img, $path_img_del);
+			unlink($path_img);
 		}
 	}
 
@@ -1109,12 +1174,12 @@ class Post extends Board {
 			if ($allow_archive && $this->board['enablearchiving'] == 1) {
 				$this->ArchiveMode(false);
 			}
-
+			/*
 			// Delete HTML pages
 			@unlink(KU_BOARDSDIR.$boardname.'/res/'.$postid.'.html');
 			@unlink(KU_BOARDSDIR.$boardname.'/res/'.$postid.'-100.html');
 			@unlink(KU_BOARDSDIR.$boardname.'/res/'.$postid.'+50.html');
-
+			*/
 			// Collect ID's
 			$file_ids = array(); $post_ids = array();
 			foreach($files as $file) {
@@ -1125,6 +1190,7 @@ class Post extends Board {
 				}
 				$file_ids []= "'".$file['file_id']."'";
 			}
+			/*
 			// Mark files as removed in db
 			if (!empty($file_ids))
 				$tc_db->Execute("UPDATE `".KU_DBPREFIX."files`
@@ -1135,6 +1201,7 @@ class Post extends Board {
 					`boardid` = '" . $boardid . "'
 					AND
 					`file_id` IN (".implode(',', $file_ids).")");
+			*/
 			// Mark posts as deleted
 			$tc_db->Execute("UPDATE `".KU_DBPREFIX."posts`
 			 SET
@@ -1175,6 +1242,7 @@ class Post extends Board {
 				`boardid` = '" . $boardid . "'
 				AND
 				`id` = ".$tc_db->qstr($postid));
+			/*
 			if ($this->post['embeds']) {
 				// Mark files as removed in db
 				$tc_db->Execute("UPDATE `".KU_DBPREFIX."files`
@@ -1189,8 +1257,8 @@ class Post extends Board {
 				foreach($this->post['embeds'] as $embed) {
 					$this->EraseFileAndThumbs($embed);
 				}
-			}
-			// Un-bump threda
+			}*/
+			// Un-bump thread
 			$bumped = $tc_db->GetOne("SELECT `bumped`
 				FROM `".KU_DBPREFIX."posts`
 				WHERE
@@ -1222,7 +1290,7 @@ class Post extends Board {
 				array($bump, $boardid, $this->post['parentid']) );
 			}
 			
-			clearPostCache($postid, $boardname);
+			//clearPostCache($postid, $boardname);
 
 			return $unbumped;
 		}

@@ -92,7 +92,7 @@ class Posting {
 		}
 		else {
 			/* Get the timestamp of the last time a reply was made by this IP address */
-			$result = $tc_db->GetOne("SELECT MAX(timestamp) 
+			/*$result = $tc_db->GetOne("SELECT MAX(timestamp) 
 				FROM `" . KU_DBPREFIX . "posts` 
 				WHERE 
 					`boardid` = " . $board_class->board['id'] . " 
@@ -100,6 +100,14 @@ class Posting {
 					`ipmd5` = '" . $this->user_id_md5 . "' 
 					AND
 					NOT `IS_DELETED`
+					AND 
+					`timestamp` > " . ($this->now - KU_REPLYDELAY));*/
+			$result = $tc_db->GetOne("SELECT MAX(timestamp) 
+				FROM `" . KU_DBPREFIX . "posts` 
+				WHERE 
+					`boardid` = " . $board_class->board['id'] . " 
+					AND 
+					`ipmd5` = '" . $this->user_id_md5 . "' 
 					AND 
 					`timestamp` > " . ($this->now - KU_REPLYDELAY));
 			if ($result) {
@@ -117,7 +125,7 @@ class Posting {
 
 		/* Check the global new thread delay */
 		if (I0_GLOBAL_NEWTHREADDELAY > 0 && $this->is_new_user) {
-			$result = $tc_db->GetOne("SELECT MAX(timestamp) 
+			/*$result = $tc_db->GetOne("SELECT MAX(timestamp) 
 				FROM `" . KU_DBPREFIX . "posts` 
 				WHERE 
 					`boardid` = " . $board_class->board['id'] . " 
@@ -127,6 +135,16 @@ class Posting {
 					`by_new_user` = '1'
 					AND
 					NOT `IS_DELETED`
+					AND 
+					`timestamp` > " . ($this->now - I0_GLOBAL_NEWTHREADDELAY));*/
+			$result = $tc_db->GetOne("SELECT MAX(timestamp) 
+				FROM `" . KU_DBPREFIX . "posts` 
+				WHERE 
+					`boardid` = " . $board_class->board['id'] . " 
+					AND 
+					`parentid` = 0 
+					AND 
+					`by_new_user` = '1'
 					AND 
 					`timestamp` > " . ($this->now - I0_GLOBAL_NEWTHREADDELAY));
 			if ($result) {
@@ -140,7 +158,7 @@ class Posting {
 				$delta = KU_NEWTHREADDELAY - ($this->now - $this->user_stats['latest_thread']);
 			}
 			else {
-				$result = $tc_db->GetOne("SELECT MAX(timestamp) 
+				/*$result = $tc_db->GetOne("SELECT MAX(timestamp) 
 					FROM `" . KU_DBPREFIX . "posts` 
 					WHERE 
 						`boardid` = " . $board_class->board['id'] . " 
@@ -150,6 +168,16 @@ class Posting {
 						`ipmd5` = '" . $this->user_id_md5 . "' 
 						AND
 						NOT `IS_DELETED`
+						AND 
+						`timestamp` > " . ($this->now - KU_NEWTHREADDELAY));*/
+				$result = $tc_db->GetOne("SELECT MAX(timestamp) 
+					FROM `" . KU_DBPREFIX . "posts` 
+					WHERE 
+						`boardid` = " . $board_class->board['id'] . " 
+						AND 
+						`parentid` = 0 
+						AND 
+						`ipmd5` = '" . $this->user_id_md5 . "' 
 						AND 
 						`timestamp` > " . ($this->now - KU_NEWTHREADDELAY));
 				if ($result) {
@@ -276,7 +304,8 @@ class Posting {
 		if (isset($_POST['replythread'])) {
 			if ($_POST['replythread'] != '0') {
 				/* Check if the thread id supplied really exists */
-				$results = $tc_db->GetOne("SELECT COUNT(*) FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $board_class->board['id'] . " AND `IS_DELETED` = '0' AND `id` = " . $tc_db->qstr($_POST['replythread']) . " AND `parentid` = '0' LIMIT 1");
+				//$results = $tc_db->GetOne("SELECT COUNT(*) FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $board_class->board['id'] . " AND `IS_DELETED` = '0' AND `id` = " . $tc_db->qstr($_POST['replythread']) . " AND `parentid` = '0' LIMIT 1");
+				$results = $tc_db->GetOne("SELECT COUNT(*) FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $board_class->board['id'] . " AND `id` = " . $tc_db->qstr($_POST['replythread']) . " AND `parentid` = '0' LIMIT 1");
 				/* If it does... */
 				if ($results > 0) {
 					return true;
@@ -304,14 +333,16 @@ class Posting {
 		global $tc_db, $board_class;
 
 		/* Check if the thread id supplied really exists and if it is locked */
-		$results = $tc_db->GetAll("SELECT `id`,`locked` FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $board_class->board['id'] . " AND `IS_DELETED` = '0' AND `id` = " . $tc_db->qstr($id) . " AND `parentid` = '0'");
+		//$results = $tc_db->GetAll("SELECT `id`,`locked` FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $board_class->board['id'] . " AND `IS_DELETED` = '0' AND `id` = " . $tc_db->qstr($id) . " AND `parentid` = '0'");
+		$results = $tc_db->GetAll("SELECT `id`,`locked` FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $board_class->board['id'] . " AND `id` = " . $tc_db->qstr($id) . " AND `parentid` = '0'");
 		/* If it does... */
 		if (count($results) > 0) {
 			/* Get the thread's info */
 			$thread_locked = $results[0]['locked'];
 			$thread_replyto = $results[0]['id'];
 			/* Get the number of replies */
-			$result = $tc_db->GetOne("SELECT COUNT(id) FROM `" . KU_DBPREFIX ."posts` WHERE `boardid` = " . $board_class->board['id'] . " AND `IS_DELETED` = '0' AND `parentid` = " . $tc_db->qstr($id) . "");
+			//$result = $tc_db->GetOne("SELECT COUNT(id) FROM `" . KU_DBPREFIX ."posts` WHERE `boardid` = " . $board_class->board['id'] . " AND `IS_DELETED` = '0' AND `parentid` = " . $tc_db->qstr($id) . "");
+			$result = $tc_db->GetOne("SELECT COUNT(id) FROM `" . KU_DBPREFIX ."posts` WHERE `boardid` = " . $board_class->board['id'] . " AND `parentid` = " . $tc_db->qstr($id) . "");
 			$thread_replies = $result;
 
 			return array($thread_replies, $thread_locked, $thread_replyto);

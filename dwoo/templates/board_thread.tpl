@@ -5,10 +5,10 @@
 	{foreach key=postkey item=post from=$posts name=postsloop}
 	
 		{if $post.parentid eq 0}
-		<div id="thread{$post.id}{$board.name}" class="replies">
+		<div id="thread{$post.id}{$board.name}" class="replies deleted_{$post.IS_DELETED}">
 		<!--{$post.id}--><div class="postnode op">
 			<a name="s{$.foreach.thread.iteration}"></a>
-			
+			{if $post.IS_DELETED} <h2 class="deleted_thread"> Тред удалён </h2>{/if}
 			{if ($post.file neq '' || $post.file_type neq '' ) && (( $post.videobox eq '' && $post.file neq '') && $post.file neq 'removed')}
 				<span class="filesize">
 				{if $post.file_type eq 'mp3' or $post.file_type eq 'ogg'}
@@ -157,7 +157,12 @@
 				{/foreach}
 				return false;">{t}Expand all images{/t}</a>
 			{/if *}
-			<!--{$post.id}--><table class="postnode">
+			{if $post.IS_DELETED}
+			{$post_deleted = 1}
+			<details class="deleted">
+				<summary class="deleted" title="Пост удалён"></summary>
+			{/if}
+			<!--{$post.id}--><table class="postnode deleted_{$post.IS_DELETED}">
 				<tbody>
 				<tr>
 					<td class="doubledash">
@@ -354,6 +359,10 @@
 			</tr>
 		</tbody>
 		</table>
+		{if $post_deleted}
+		{$post_deleted = 0}
+		</details>
+		{/if}
 		{/if}<!--/-->
 	{/foreach}
 	{if $modifier eq 'first100'}

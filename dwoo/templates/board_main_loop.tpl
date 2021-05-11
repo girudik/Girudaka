@@ -18,11 +18,24 @@
     <svg class="icon b-icon"><use xlink:href="#i-unhide"></use></svg>
    </a>
   </span>
-  <div id="thread{$post.id}-{$board.name}" data-threadid="{$post.id}"{if $isthread} class="replies"{/if} data-boardid="{$board.id}"> {* #thread → *}
+  {if $post.IS_DELETED}
+	{$thread_deleted = 1}
+	<details class="deleted">
+		<summary class="deleted" title="Тред удалён"></summary>
+	{/if}
+  <div id="thread{$post.id}-{$board.name}" data-threadid="{$post.id}" class="{if $isthread}replies {/if}deleted_{$post.IS_DELETED}" data-boardid="{$board.id}"> {* #thread → *}
    <div class="postnode op" data-id="{$post.id}" data-board="{$board.name}"> {* .postnode.op → *}
+
+    {if $post.IS_DELETED && $isthread} <h2 class="deleted_thread"> Тред удалён </h2>{/if}
+
     <a name="s{$.foreach.thread.iteration}"></a>
  {else} {* If reply → *}
   {if $isthread}<div class="i0svcel">!i0-pd:{$post.id}</div>{/if} {* post delimiter for quick parsing *}
+  {if $post.IS_DELETED}
+  {$post_deleted = 1}
+  <details class="deleted">
+    <summary class="deleted" title="Пост удалён"></summary>
+  {/if}
   <table id="postnode{$post.id}-{$board.name}" class="postnode" data-id="{$post.id}" data-board="{$board.name}"><tbody>
    <tr>
     <td class="doubledash">&gt;&gt;</td>
@@ -245,7 +258,7 @@
  {if $post.parentid eq 0}
   </div> {* ← /.postnode.op (at least I hope so) *}
   {if not $isthread}
-   <div id="replies{$post.id}-{$board.name}" class="replies">
+   <div id="replies{$post.id}-{$board.name}" class="replies deleted_{$post.IS_DELETED}">
    {if $post.replies}
     <span class="omittedposts">
      <a href="{%KU_BOARDSFOLDER}{$board.name}/res/{if $post.parentid eq 0}{$post.id}{else}{$post.parentid}{/if}.html" onclick="return expandthread('{if $post.parentid eq 0}{$post.id}{else}{$post.parentid}{/if}','{$board.name}', event)" title="{t}Expand Thread{/t}">
@@ -308,14 +321,27 @@
     </td> {* ← /reply *}
    </tr>
   </tbody></table> {* ← .postnode *}
+  {if $post_deleted}
+  {$post_deleted = 0}
+  </details>
+  {/if}
  {/if}
  {if $isthread}<div class="i0svcel">!i0-pd-end</div>{/if} {* post delimiter for quick parsing *}
  {/foreach} 
  {if not $isthread}
   </div> {* ← I've given up at this point *}
   </div>
-  <br clear="left">
-  <hr>
+  {if $thread_deleted}
+  </details>
+  {/if}
+  {if $thread_deleted}
+  {else}
+  <br clear="left" />
+  <hr />
+  {/if}
+  {if $thread_deleted}
+    {$thread_deleted = 0}
+  {/if}
  {else}
   {if $modifier eq 'first100'}
    <span class="omittedposts" style="float: left">

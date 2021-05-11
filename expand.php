@@ -59,7 +59,8 @@ if( isset($_GET['after']) && (int)$_GET['after']!=0 ) {
     $refreshq ='';
     $getnewposts = false;
 }
-$posts = $tc_db->GetAll('SELECT * FROM `'.KU_DBPREFIX.'posts` WHERE `boardid` = ' . $board_class->board['id'] . ' AND `IS_DELETED` = 0 AND `parentid` = '.$tc_db->qstr($_GET['threadid']) . $refreshq .  ' ORDER BY `id` ASC');
+//$posts = $tc_db->GetAll('SELECT * FROM `'.KU_DBPREFIX.'posts` WHERE `boardid` = ' . $board_class->board['id'] . ' AND `IS_DELETED` = 0 AND `parentid` = '.$tc_db->qstr($_GET['threadid']) . $refreshq .  ' ORDER BY `id` ASC');
+$posts = $tc_db->GetAll('SELECT * FROM `'.KU_DBPREFIX.'posts` WHERE `boardid` = ' . $board_class->board['id'] . ' AND `parentid` = '.$tc_db->qstr($_GET['threadid']) . $refreshq .  ' ORDER BY `id` ASC');
 if( count($posts)==0 ) die();
 
 global $expandjavascript;

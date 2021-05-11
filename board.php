@@ -738,7 +738,7 @@ elseif (
 									.($ismod ? ' '._gettext('(By mod)') : '')
 									.($isop ? ' '._gettext('(By OP)') : ''));
 							}
-							else { // Deleting a threda
+							else { // Deleting a thread
 								$pages_to[$b_class->board['name']] = INF;
 								$destination_page = $b_class->GetPageNumber($thread_id);
 								if ($origin_page['n_pages'] == $destination_page['n_pages']) {
