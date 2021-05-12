@@ -83,7 +83,9 @@ function RegenerateOverboard($boardlist=null) {
 			// Generate thread piece
 			$threadling = $boards[$thread['boardname']]->GenerateOverboardThreadFragment($thread['id']);
 			$pages[$current_page] .= $threadling;
-		$i++; }unset($thread);
+			$i++;
+		}
+		unset($thread);
 	}
 	else {
 		$pages = [$form_start];
@@ -96,8 +98,14 @@ function RegenerateOverboard($boardlist=null) {
 		$over_board_class->dwoo_data->assign('thispage', $page);
 		$footer = $over_board_class->Footer(false, (microtime_float()-$execution_times[$page]));
 		$contents = $header.$contents.$footer;
-		print_page(KU_BOARDSDIR.I0_OVERBOARD_DIR.'/'.($page==0 ? KU_FIRSTPAGE : '/'.$page.'.html'), $contents, I0_OVERBOARD_DIR);
-	$page++; }unset($contents);
+		$filename = KU_BOARDSDIR.I0_OVERBOARD_DIR.'/'.($page==0 ? KU_FIRSTPAGE : '/'.$page.'.html');
+		if (!file_exists($filename)) {
+			@mkdir(pathinfo($filename, PATHINFO_DIRNAME), 0755, true);
+		}
+		print_page($filename, $contents, I0_OVERBOARD_DIR);
+		$page++;
+	}
+	unset($contents);
 
 	$over_board_class->DeleteOldPages($totalpages-1);
 }

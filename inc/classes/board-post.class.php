@@ -361,6 +361,9 @@ class Board {
 				$content = str_replace("&nbsp;\r\n", '&nbsp;',$content);
 
 				$filename = KU_BOARDSDIR.$this->board['name'].'/'.($page==0 ? KU_FIRSTPAGE : '/'.$page.'.html');
+				if (!file_exists($filename)) {
+					@mkdir(pathinfo($filename, PATHINFO_DIRNAME), 0755, true);
+				}
 				$this->PrintPage($filename, $content, $this->board['name']);
 			}
 			$page++;
