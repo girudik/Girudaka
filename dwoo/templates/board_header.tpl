@@ -131,7 +131,7 @@
 			{if $sect.abbreviation neq '20'}
 				{foreach name=brds item=brd from=$sect}
 					{if isset($brd.desc) and is_array($brd)}
-					<a class="menu-item" title="{$brd.desc}" href="{%KU_BOARDSFOLDER}{$brd.name}/">/{$brd.name}/ - {$brd.desc}</a>
+					<a class="menu-item" data-id="{$brd.id}" title="{$brd.desc}" href="{%KU_BOARDSFOLDER}{$brd.name}/">/{$brd.name}/ - {$brd.desc}</a>
 					{/if}
 				{/foreach}
 			{else}

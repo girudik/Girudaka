@@ -880,6 +880,7 @@ class Board {
 				foreach($results2 AS $line2) {
 					$boards[$line['id']][$line2['id']]['name'] = htmlspecialchars($line2['name']);
 					$boards[$line['id']][$line2['id']]['desc'] = htmlspecialchars($line2['desc']);
+					$boards[$line['id']][$line2['id']]['id'] = $line2['id'];
 				}
 			}
 		} else {
