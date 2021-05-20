@@ -2132,7 +2132,7 @@ figure > a {
   font-size: 0;
 }
 .fc-filename {
-  max-width: 8ch;
+  max-width: 28ch;
   display: inline-block;
   text-overflow: ellipsis;
   overflow: hidden;
