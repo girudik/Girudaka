@@ -79,7 +79,7 @@
 * При необходимости добавьте содержимое `UTIL/nginx.snippets.conf` в ваш файл конфигурации хоста nginx.
 * Для пересборки kusaba.new.js:
 ```bash
-cd \lib\javascript\es6
+cd ./lib/javascript/es6
 npm install 
 npm audit fix #(если потребует)
 npm run-script build
