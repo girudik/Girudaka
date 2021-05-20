@@ -52,13 +52,13 @@ function createThumbnail($name, $filename, $new_w, $new_h) {
 		$convert .= ' ' . escapeshellarg($filename);
 		exec($convert);
 
-    if (KU_USEOPTIPNG) {
-      if (substr(strrchr($filename,'.'),1) == 'png') {
-        $opti =  'optipng -o' . escapeshellarg(KU_OPTIPNGLV);
-        $opti .= ' ' . escapeshellarg($filename);
-        exec($opti);
-      }
-    }
+		if (KU_USEOPTIPNG) {
+			if (substr(strrchr($filename,'.'),1) == 'png') {
+			$opti =	 'optipng -o' . escapeshellarg(KU_OPTIPNGLV);
+			$opti .= ' ' . escapeshellarg($filename);
+			exec($opti);
+			}
+		}
 
 		if (is_file($filename)) {
 			return true;
@@ -66,32 +66,32 @@ function createThumbnail($name, $filename, $new_w, $new_h) {
 			return false;
 		}
 	}
-  elseif (KU_THUMBMETHOD == 'ffmpeg') {
-    $imagewidth = exec('ffprobe -v quiet -show_entries stream=width -of default=noprint_wrappers=1:nokey=1 '. escapeshellarg($name));
-    $imageheight = exec('ffprobe -v quiet -show_entries stream=height -of default=noprint_wrappers=1:nokey=1 '. escapeshellarg($name));
-    $convert = 'ffmpeg -i ' . escapeshellarg($name);
-    if (!KU_ANIMATEDTHUMBS) {
-      $convert .= ' -vframes 1';
-    }
-    if ($imagewidth > $imageheight) {
-      $convert .= ' -vf scale="' . $new_w . ':-1" -quality ';
-    } else {
-      $convert .= ' -vf scale="-1:' . $new_h . '" -quality ';
-    } 
-    if (substr(strrchr($filename,'.'),1) != 'gif') {
-      $convert .= '70';
-    } else {
-      $convert .= '90';
-    }
-    $convert .= ' ' . escapeshellarg($filename);
-    exec($convert);
+	elseif (KU_THUMBMETHOD == 'ffmpeg') {
+		$imagewidth = exec('ffprobe -v quiet -show_entries stream=width -of default=noprint_wrappers=1:nokey=1 '. escapeshellarg($name));
+		$imageheight = exec('ffprobe -v quiet -show_entries stream=height -of default=noprint_wrappers=1:nokey=1 '. escapeshellarg($name));
+		$convert = 'ffmpeg -i ' . escapeshellarg($name);
+		if (!KU_ANIMATEDTHUMBS) {
+			$convert .= ' -vframes 1';
+		}
+		if ($imagewidth > $imageheight) {
+			$convert .= ' -vf scale="' . $new_w . ':-1" -quality ';
+		} else {
+			$convert .= ' -vf scale="-1:' . $new_h . '" -quality ';
+		}
+		if (substr(strrchr($filename,'.'),1) != 'gif') {
+			$convert .= '70';
+		} else {
+			$convert .= '90';
+		}
+		$convert .= ' ' . escapeshellarg($filename);
+		exec($convert);
 
-    if (is_file($filename)) {
-      return true;
-    } else {
-      return false;
-    }
-  }
+		if (is_file($filename)) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 	elseif (KU_THUMBMETHOD == 'gd') {
 		$system=explode(".", $filename);
 		$system = array_reverse($system);
@@ -191,7 +191,6 @@ function fastImageCopyResampled(&$dst_image, &$src_image, $dst_x, $dst_y, $src_x
 		imagecopyresampled ($dst_image, $temp, $dst_x, $dst_y, 0, 0, $dst_w, $dst_h, $dst_w * $quality, $dst_h * $quality);
 		imagedestroy ($temp);
 	}
-
 	else imagecopyresampled ($dst_image, $src_image, $dst_x, $dst_y, $src_x, $src_y, $dst_w, $dst_h, $src_w, $src_h);
 
 	return true;
@@ -204,188 +203,214 @@ function fastImageCopyResampled(&$dst_image, &$src_image, $dst_x, $dst_y, $src_x
  * @param string $code Video code
  * @param integer $maxwidth Maximum thumbnail width in pixels
  * @return array(
-	   	string $file Temp file URL
-	   	string $title Video title
-	   	string $duration Video duration ([hh:]mm:ss)
-	   	integer $width Thumbnail width in pixels
-	   	resource $tmpfile Temp file descriptor
- 	 )
+		string $file Temp file URL
+		string $title Video title
+		string $duration Video duration ([hh:]mm:ss)
+		integer $width Thumbnail width in pixels
+		resource $tmpfile Temp file descriptor
+	)
  */
 function fetch_video_data($site, $code, $maxwidth, $thumb_tmpfile) {
-  if (!in_array($site, array('you', 'vim', 'cob', 'scl')))
-    return array('error' => 'unsupported_site');
+	if (!in_array($site, array('you', 'vim', 'cob', 'scl')))
+		return array('error' => 'unsupported_site');
 
-  // Pre-setup
-  $ch = curl_init();
-  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-  curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-  curl_setopt ($ch, CURLOPT_TIMEOUT, 10);
-  if (I0_CURL_PROXY)
-    curl_setopt($ch, CURLOPT_PROXY, I0_CURL_PROXY);
+	// Pre-setup
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+	curl_setopt ($ch, CURLOPT_TIMEOUT, 10);
+	if (I0_CURL_PROXY)
+		curl_setopt($ch, CURLOPT_PROXY, I0_CURL_PROXY);
 
-  // Getting a URL
-  switch ($site) {
-    case 'cob':
-      $url = "https://coub.com/api/v2/coubs/".$code.".json";
-      break;
-    case 'vim':
-      $url = 'https://vimeo.com/api/v2/video/'.$code.'.json';
-      break;
-    case 'you':
-      $url = 'https://www.youtube.com/get_video_info?video_id='.$code;
-      break;
-    case 'scl':
-      $url = 'https://soundcloud.com/oembed?url=https%3A%2F%2Fsoundcloud.com%2F' . urlencode($code) . '&format=json';
-      break;
-    default:
-      return array('error' => _gettext('No JSON URL specified.'));
-  }
-  curl_setopt($ch, CURLOPT_URL, $url);
+	// Getting a URL
+	switch ($site) {
+	case 'cob':
+		$url = "https://coub.com/api/v2/coubs/".$code.".json";
+		break;
+	case 'vim':
+		$url = 'https://vimeo.com/api/v2/video/'.$code.'.json';
+		break;
+	case 'you':
+		//$url = 'https://www.youtube.com/get_video_info?video_id='.$code;
+		$url = 'https://noembed.0-chan.ru/embed?url=https://www.youtube.com/watch?v=' . $code . '&maxwidth=480&maxheight=360&autoplay=1';
+		break;
+	case 'scl':
+		$url = 'https://soundcloud.com/oembed?url=https%3A%2F%2Fsoundcloud.com%2F' . urlencode($code) . '&format=json';
+		break;
+	default:
+		return array('error' => _gettext('No JSON URL specified.'));
+	}
+	curl_setopt($ch, CURLOPT_URL, $url);
 
-  // Fetching data
-  $result = curl_exec($ch);
-  switch (curl_getinfo($ch, CURLINFO_HTTP_CODE)) {
-    case 404: return array('error' => _gettext('Unable to connect to')); break;
-    case 303: return array('error' => _gettext('Invalid video ID.')); break;
-    case 302: break;
-    case 301: break;
-    case 200: break;
-    default:  return array('error' => _gettext('Invalid response code ').' (JSON)'); break;
-  }
-  curl_close($ch);
-  if ($site == 'you') {
-    parse_str($result, $ytjson);
-    $data = json_decode($ytjson['player_response'], true);
-  } else {
-    $data = json_decode($result, true);
-  }
-  if ($data == NULL)
-    return array('error' => _gettext('API returned invalid data.'));
+	// Fetching data
+	$result = curl_exec($ch);
+	switch (curl_getinfo($ch, CURLINFO_HTTP_CODE)) {
+		case 404: return array('error' => _gettext('Unable to connect to')); break;
+		case 303: return array('error' => _gettext('Invalid video ID.')); break;
+		case 302: break;
+		case 301: break;
+		case 200: break;
+		default: return array('error' => _gettext('Invalid response code ').' (JSON)'); break;
+	}
+	curl_close($ch);
+	/*if ($site == 'you') {
+		parse_str($result, $ytjson);
+		$data = json_decode($ytjson['player_response'], true);
+	} else {
+		$data = json_decode($result, true);
+	}*/
+	$data = json_decode($result, true);
 
-  // Find needed thumbnail width
-  switch ($site) {
-    case 'cob':
-      $widths_available = array(
-          'micro' => 70,
-          'tiny' => 112,
-          'small' => 400,
-          'med' => 640,
-          'big' => 1280
-      );
-      break;
-    case 'vim':
-      $widths_available = array(
-          'small' => 100,
-          'medium' => 200,
-          'large' => 640
-      );
-      break;
-    case 'you':
-      $widths_available = array(
-          'hq' => 480,
-          'maxres' => 1280
-      );
-      break;
-    case 'scl':
-      $widths_available = array(
-          'default' => 250
-      );
-      break;
-    default:
-      return array('error' => _gettext('No thumbnails available.'));
-  }
-  $i = 0; 
-  $options_available = count($widths_available);
-  foreach ($widths_available as $preset => $width) {
-    $i++;
-    if ($width >= $maxwidth || $options_available == $i) {
-      $chosen_preset = $preset;
-      $thumbwidth = $width;
-      break;
-    }
-  }
+	if ($data == NULL)
+		return array('error' => _gettext('API returned invalid data.'));
 
-  // Get thumbnail URL
-  switch ($site) {
-    case 'cob':
-      $thumb_url = preg_replace('/%{version}/', $chosen_preset, $data['image_versions']['template']);
-      break;
-    case 'vim':
-      $thumb_url = preg_replace('/\.webp/', '.jpg', $data[0]['thumbnail_'.$chosen_preset]);
-      break;
-    case 'you':
-      $thumb_url = 'https://i.ytimg.com/vi/'.$code.'/'.$chosen_preset.'default.jpg';
-      break;
-    case 'scl':
-      $thumb_url = $data['thumbnail_url'];
-      break;
-    default:
-      return array('error' => _gettext('No thumb URL specified.'));
-  }
-  if (!$thumb_url)
-    return array('error' => _gettext('API returned invalid data.'));
+	// Find needed thumbnail width
+	switch ($site) {
+	case 'cob':
+		$widths_available = array(
+			'micro' => 70,
+			'tiny' => 112,
+			'small' => 400,
+			'med' => 640,
+			'big' => 1280
+		);
+		break;
+	case 'vim':
+		$widths_available = array(
+			'small' => 100,
+			'medium' => 200,
+			'large' => 640
+		);
+		break;
+	case 'you':
+		$widths_available = array(
+			'hq' => 480,
+			'maxres' => 1280
+		);
+		break;
+	case 'scl':
+		$widths_available = array(
+			'default' => 250
+		);
+		break;
+	default:
+		return array('error' => _gettext('No thumbnails available.'));
+	}
+	$i = 0;
+	$options_available = count($widths_available);
+	foreach ($widths_available as $preset => $width) {
+		$i++;
+		if ($width >= $maxwidth || $options_available == $i) {
+			$chosen_preset = $preset;
+			$thumbwidth = $width;
+			break;
+		}
+	}
 
-  // Download thumbnail to temporary directory
-  $ch = curl_init($thumb_url);
-  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-  curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-  curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-  curl_setopt($ch, CURLOPT_FILE, $thumb_tmpfile);
-  curl_setopt($ch, CURLOPT_HEADER, 0);
-  if (I0_CURL_PROXY)
-    curl_setopt($ch, CURLOPT_PROXY, I0_CURL_PROXY);
-  curl_exec($ch);
-  switch (curl_getinfo($ch, CURLINFO_HTTP_CODE)) {
-    case 404: return array('error' => _gettext('Unable to retrieve thumbnail')); break;
-    case 303: return array('error' => _gettext('Unable to retrieve thumbnail')); break;
-    case 302: break;
-    case 301: break;
-    case 200: break;
-    default:  return array('error' => _gettext('Invalid response code ').' (Thumb)'); break;
-  }
-  curl_close($ch);
+	// Get thumbnail URL
+	switch ($site) {
+		case 'cob':
+			$thumb_url = preg_replace('/%{version}/', $chosen_preset, $data['image_versions']['template']);
+			break;
+		case 'vim':
+			$thumb_url = preg_replace('/\.webp/', '.jpg', $data[0]['thumbnail_'.$chosen_preset]);
+			break;
+		case 'you':
+			$thumb_url = 'https://i.ytimg.com/vi/'.$code.'/'.$chosen_preset.'default.jpg';
+			break;
+		case 'scl':
+			$thumb_url = $data['thumbnail_url'];
+			break;
+		default:
+			return array('error' => _gettext('No thumb URL specified.'));
+	}
+	if (!$thumb_url)
+		return array('error' => _gettext('API returned invalid data.'));
 
-  // Get the rest of the data
-  $r = array('width' => $thumbwidth);
-  switch ($site) {
-    case 'cob':
-      $r['width'] = (int)$data['dimensions']['big'][0];
-      $r['height'] = (int)$data['dimensions']['big'][1];
-      $r['title'] = $data['title'];
-      $duration = $data['duration'];
-      break;
-    case 'vim':
-      $r['width'] = (int)$data[0]['width'];
-      $r['height'] = (int)$data[0]['height'];
-      $r['title'] = $data[0]['title'];
-      $duration = $data[0]['duration'];
-      break;
-    case 'you':
-      $r['width'] = 1920;
-      $r['height'] = 1080;
-      $r['title'] = $data['videoDetails']['title'];
-      $duration = $data['videoDetails']['lengthSeconds'];
-      break;
-    case 'scl':
-      $r['width'] = 500;
-      $r['height'] = 500;
-      $r['title'] = $data['title'];
-      preg_match('/tracks\/([0-9]+)&/m', urldecode($data['html']), $matches);
-      if ($matches) {
-        $r['code'] = $matches[1];
-      }
-      break;
-    default:
-      return array('error' => _gettext('API returned invalid data.'));
-  }
-  if ($r['width'] <= 0 || $r['height'] <= 0) {
-    // var_dump($r);
-  	return array('error' => _gettext('API returned invalid data.'));
-  }
-  // Convert duration into readable string
-  $r['duration'] = isset($duration) ? preg_replace('/^00:/m', '', gmdate("H:i:s", round($duration, 0))) : 0;
-  $r['error'] = false;
-  return $r;
+	// Download thumbnail to temporary directory
+	$ch = curl_init($thumb_url);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+	curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+	curl_setopt($ch, CURLOPT_FILE, $thumb_tmpfile);
+	curl_setopt($ch, CURLOPT_HEADER, 0);
+	if (I0_CURL_PROXY)
+		curl_setopt($ch, CURLOPT_PROXY, I0_CURL_PROXY);
+	curl_exec($ch);
+	switch (curl_getinfo($ch, CURLINFO_HTTP_CODE)) {
+		case 404: return array('error' => _gettext('Unable to retrieve thumbnail')); break;
+		case 303: return array('error' => _gettext('Unable to retrieve thumbnail')); break;
+		case 302: break;
+		case 301: break;
+		case 200: break;
+		default: return array('error' => _gettext('Invalid response code ').' (Thumb)'); break;
+	}
+	curl_close($ch);
+
+	// Get the rest of the data
+	$r = array('width' => $thumbwidth);
+	switch ($site) {
+	case 'cob':
+		$r['width'] = (int)$data['dimensions']['big'][0];
+		$r['height'] = (int)$data['dimensions']['big'][1];
+		$r['title'] = $data['title'];
+		$duration = $data['duration'];
+		break;
+	case 'vim':
+		$r['width'] = (int)$data[0]['width'];
+		$r['height'] = (int)$data[0]['height'];
+		$r['title'] = $data[0]['title'];
+		$duration = $data[0]['duration'];
+		break;
+	case 'you':
+		$r['width'] = 1920;
+		$r['height'] = 1080;
+		//$r['title'] = $data['videoDetails']['title'];
+		$r['title'] = $data['title'];
+		//$duration = $data['videoDetails']['lengthSeconds'];
+		// duration hack
+		$ch = curl_init("https://www.youtube.com/watch?v=" . $code);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+		curl_setopt ($ch, CURLOPT_TIMEOUT, 10);
+		if (I0_CURL_PROXY)
+			curl_setopt($ch, CURLOPT_PROXY, I0_CURL_PROXY);
+		$result = curl_exec($ch);
+		switch (curl_getinfo($ch, CURLINFO_HTTP_CODE)) {
+			case 404: break;
+			case 303: break;
+			case 302: break;
+			case 301: break;
+			case 200: break;
+			default: break;
+		}
+		curl_close($ch);
+		$re = '/<meta itemprop="duration" content="PT(\d{1,6})M(\d{1,6})S">/m';
+		preg_match_all($re, $result, $matches, PREG_SET_ORDER, 0);
+		$min = $matches[0][1];
+		$sec = $matches[0][2] - 1; // fix youtube bug
+		$duration = ($min * 60) + $sec;
+		break;
+	case 'scl':
+		$r['width'] = 500;
+		$r['height'] = 500;
+		$r['title'] = $data['title'];
+		preg_match('/tracks\/([0-9]+)&/m', urldecode($data['html']), $matches);
+		if ($matches) {
+			$r['code'] = $matches[1];
+		}
+		break;
+	default:
+		return array('error' => _gettext('API returned invalid data.'));
+	}
+	if ($r['width'] <= 0 || $r['height'] <= 0) {
+		// var_dump($r);
+		return array('error' => _gettext('API returned invalid data.'));
+	}
+	// Convert duration into readable string
+	$r['duration'] = isset($duration) ? preg_replace('/^00:/m', '', gmdate("H:i:s", round($duration, 0))) : 0;
+	$r['error'] = false;
+	return $r;
 }
 
 /**
@@ -434,56 +459,56 @@ function TrimToPageLimit($board) {
 
 // Delete posts whose time is up
 function collect_dead() {
-  global $tc_db;
-  
-  $deathlist = $tc_db->GetAll("SELECT `id`, `boardid`, `parentid` 
-    FROM `".KU_DBPREFIX."posts`
-    WHERE 
-      `IS_DELETED`='0' 
-      AND
-      `deleted_timestamp`>'0'
-      AND 
-      `deleted_timestamp`<=UNIX_TIMESTAMP(NOW())");
-  $dl_struct = array();
-  if (isset($deathlist) && $deathlist) {
-    foreach ($deathlist as $post) {
-      if (! $dl_struct[$post['boardid']]) {
-        $dl_struct[$post['boardid']] = array();
-      }
-      $thread_id = $post['parentid'] == 0 ? $post['id'] : $post['parentid'];
-      if (! $dl_struct[$post['boardid']][$thread_id]) {
-        $dl_struct[$post['boardid']][$thread_id] = array();
-      }
-      $dl_struct[$post['boardid']][$thread_id] []= $post['id'];
-    }
-    foreach ($dl_struct as $boardid => $threads) {
-      $board_name = $tc_db->GetOne("SELECT `name` FROM `".KU_DBPREFIX."boards` WHERE `id`='$boardid'");
-      $board_class = new Board($board_name);
-      $board_rebuild = false;
-      foreach ($threads as $thread_id => $posts) {
-        $thread_rebuild = false;
-        foreach($posts as $post_id) {
-          $post_class = new Post($post_id, $board_name, $boardid);
-          $delres = $post_class->Delete(false, I0_ERASE_DELETED);
-          if ($delres && $delres !== 'already_deleted') {
-            $thread_rebuild = true;
-            if ($post_id == $thread_id) {
-              $thread_deleted = true;
-            }
-          }
-        }
-        if ($thread_rebuild) {
-          $board_rebuild = true;
-          if (! $thread_deleted) {
-            $board_class->RegenerateThreads($thread_id);
-          }
-        }
-      }
-      if ($board_rebuild) {
-        $board_class->RegeneratePages();
-      }
-    }
-  }
+	global $tc_db;
+
+	$deathlist = $tc_db->GetAll("SELECT `id`, `boardid`, `parentid`
+	FROM `".KU_DBPREFIX."posts`
+	WHERE
+		`IS_DELETED`='0'
+		AND
+		`deleted_timestamp`>'0'
+		AND
+		`deleted_timestamp`<=UNIX_TIMESTAMP(NOW())");
+	$dl_struct = array();
+	if (isset($deathlist) && $deathlist) {
+		foreach ($deathlist as $post) {
+			if (! $dl_struct[$post['boardid']]) {
+				$dl_struct[$post['boardid']] = array();
+			}
+			$thread_id = $post['parentid'] == 0 ? $post['id'] : $post['parentid'];
+			if (! $dl_struct[$post['boardid']][$thread_id]) {
+				$dl_struct[$post['boardid']][$thread_id] = array();
+			}
+			$dl_struct[$post['boardid']][$thread_id] []= $post['id'];
+		}
+		foreach ($dl_struct as $boardid => $threads) {
+			$board_name = $tc_db->GetOne("SELECT `name` FROM `".KU_DBPREFIX."boards` WHERE `id`='$boardid'");
+			$board_class = new Board($board_name);
+			$board_rebuild = false;
+			foreach ($threads as $thread_id => $posts) {
+				$thread_rebuild = false;
+				foreach($posts as $post_id) {
+					$post_class = new Post($post_id, $board_name, $boardid);
+					$delres = $post_class->Delete(false, I0_ERASE_DELETED);
+					if ($delres && $delres !== 'already_deleted') {
+						$thread_rebuild = true;
+						if ($post_id == $thread_id) {
+							$thread_deleted = true;
+						}
+					}
+				}
+				if ($thread_rebuild) {
+					$board_rebuild = true;
+					if (! $thread_deleted) {
+						$board_class->RegenerateThreads($thread_id);
+					}
+				}
+			}
+			if ($board_rebuild) {
+				$board_class->RegeneratePages();
+			}
+		}
+	}
 }
 
 ?>
