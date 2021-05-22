@@ -63,7 +63,8 @@ function RegenerateOverboard($boardlist=null) {
 
 	if (count($threads)) {
 		$previous_page = -1;
-		$i = 0; foreach($threads as &$thread) {
+		$i = 0;
+		foreach($threads as &$thread) {
 			$current_page = floor($i / I0_OVERBOARD_THREADS);
 			if ($current_page != $previous_page) {
 				$execution_times[$current_page] = microtime_float();
@@ -82,6 +83,9 @@ function RegenerateOverboard($boardlist=null) {
 			}
 			// Generate thread piece
 			$threadling = $boards[$thread['boardname']]->GenerateOverboardThreadFragment($thread['id']);
+			if (!$threadling) {
+				continue;
+			}
 			$pages[$current_page] .= $threadling;
 			$i++;
 		}

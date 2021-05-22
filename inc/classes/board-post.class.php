@@ -536,6 +536,9 @@ class Board {
 			ON `".KU_DBPREFIX."postembeds`.`id` = `uniq_id`.`id`
 			WHERE `boardid` = '". $this->board['id'] ."'
 			ORDER BY `uniq_id`.`id` ASC");
+		if (!$posts) {
+			return 0;
+		}
 		$posts = group_embeds($posts, true);
 		// ← Get OP + last posts to render
 
