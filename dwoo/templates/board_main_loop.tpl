@@ -367,6 +367,9 @@
    </span>
   {/if}
   </div>{* Huh? *}
+  {if $thread_deleted}
+  </details>
+  {/if}
   <br clear="left" />
   <div id="newposts_get"><!-- 
   --><a href="#" onclick="return newposts.get()" title="А если нет, то не получать новые посты"><!-- 
