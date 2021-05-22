@@ -164,7 +164,7 @@ class Upload {
 
 	function ParseEmbed($url) {
 		$sites = array(
-			'you' => "/(?:youtu(?:\.be|be\.com)\/(?:.*v(?:\/|=)|(?:.*\/)?)(?P<code>[\w'-]+))(?:[?#&]t=(?:(?P<h>[0-9]{1,2})h)?(?:(?P<m>[0-9]{1,2})m)?(?:(?P<s>[0-9]{1,2})s)?)?/i",
+			'you' => "/(?P<short_code>[a-z-A-Z0-9_-]{11})|(?:youtu(?:\.be|be\.com)\/(?:.*v(?:\/|=)|(?:.*\/)?)(?P<code>[\w'-]+))(?:[?#&]t=(?:(?P<h>[0-9]{1,2})h)?(?:(?P<m>[0-9]{1,2})m)?(?:(?P<s>[0-9]{1,2})s)?)?/i",
 			'vim' => "/[\w\W]*vimeo\.com\/(?:.*?)(?P<code>[0-9]+)(?:#t=(?:(?P<h>[0-9]{1,2})h)?(?:(?P<m>[0-9]{1,2})m)?(?:(?P<s>[0-9]{1,2})s)?)?/i",
 			'cob' => "/[\w\W]*coub\.com\/view\/(?P<code>[\w\W]*)[\w\W]*/i",
 			'scl' => "/[\w\W]*soundcloud.com\/(?P<code>[\w\W]*)[\w\W]*/i",
@@ -173,8 +173,16 @@ class Upload {
 			preg_match($rx, $url, $matches);
 			if ($matches) {
 				$time = 0;
-				$code = $matches['code'];
 				$site = $s;
+				if ($site = "you") {
+					if ($matches['code']) {
+						$code = $matches['code'];
+					} else {
+						$code = $matches['short_code'];
+					}
+				} else {
+					$code = $matches['code'];
+				}
 				foreach(array('h', 'm', 's') as $u) {
 					$t = (int)$matches[$u];
 					if ($t > 0 && $t < 60) {
