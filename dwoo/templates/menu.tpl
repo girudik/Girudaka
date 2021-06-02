@@ -22,7 +22,7 @@
 <!-- <script type="text/javascript" src="{%KU_WEBFOLDER}lib/javascript/menu.js"></script> -->
 <script type="text/javascript" src="{%KU_WEBFOLDER}lib/javascript/jquery-1.11.1.min.js"></script>
 <script type="text/javascript" src="{%KU_WEBFOLDER}lib/javascript/lodash.min.js"></script>
-<script type="text/javascript" src="{%KU_WEBFOLDER}lib/javascript/kusaba.new.js"></script>
+<script type="text/javascript" src="{%KU_WEBFOLDER}lib/javascript/instant.js"></script>
 <script type="text/javascript"><!--
 var ku_boardspath = '{%KU_BOARDSPATH}';
 {if $showdirs eq 0 && $files.0 neq $files.1 }

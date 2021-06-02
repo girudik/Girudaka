@@ -53,7 +53,7 @@ function RegenerateOverboard($boardlist=null) {
 		ORDER BY `latest_threads`.`bumped` DESC
 		LIMIT $total_threads");
 
-	$form_start = '<form id="delform" action="'.KU_CGIPATH.'/board.php" method="post"><input type="hidden" name="board" value="'.I0_OVERBOARD_DIR.'">';
+	$form_start = '<form id="delform_instant" action="'.KU_CGIPATH.'/board.php" method="post"><input type="hidden" name="board" value="'.I0_OVERBOARD_DIR.'">';
 
 	if (count($threads)) {
 		$previous_page = -1;

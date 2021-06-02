@@ -56,7 +56,7 @@
 <script src="{$cwebpath}lib/javascript/lodash.min.js"></script>
 <script src="{$cwebpath}lib/javascript/prettify/prettify.js"></script>
 <script src="{%KU_WEBPATH}/lib/javascript/Sortable.min.js"></script>
-<script src="{%KU_WEBPATH}/lib/javascript/kusaba.new.js?v={%KU_JSVER}"></script>
+<script src="{%KU_WEBPATH}/lib/javascript/instant.js?v={%KU_JSVER}"></script>
 {if %KU_LIVEUPD_ENA}
 <script src="{%KU_CLI_LIVEUPD_API}/socket.io/socket.io.js"></script>
 {/if}

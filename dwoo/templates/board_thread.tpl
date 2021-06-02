@@ -1,5 +1,5 @@
 {if not $isexpand and not $isread}
-	<form id="delform" action="{%KU_CGIPATH}/board.php" method="post">
+	<form id="delform_instant" action="{%KU_CGIPATH}/board.php" method="post">
 	<input type="hidden" name="board" value="{$board.name}" />
 {/if}
 	{foreach key=postkey item=post from=$posts name=postsloop}

@@ -1,4 +1,4 @@
-<form id="delform" action="{%KU_CGIPATH}/board.php" method="post">
+<form id="delform_instant" action="{%KU_CGIPATH}/board.php" method="post">
 <input type="hidden" name="board" value="{$board.name}" />
 {foreach name=thread item=postsa from=$posts}
 	{foreach key=postkey item=post from=$postsa}

@@ -24,7 +24,7 @@
 	</form>
 
 	<script type="text/javascript"><!--
-		set_delpass("delform");
+		set_delpass("delform_instant");
 	//--></script>
 {/if}
 {if $replythread eq 0}
