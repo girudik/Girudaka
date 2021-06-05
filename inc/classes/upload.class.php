@@ -479,7 +479,8 @@ class Upload {
 								if (finfo_file($finfo, $attachment['file_location']) != $filetype_required_mime) {
 									/* Delete the file we just uploaded and kill the script */
 									unlink($attachment['file_location']);
-									$this->exitWithUploadErrorPage(_gettext('Invalid MIME type for this filetype.'), $atype, $i, $filename);
+									//$this->exitWithUploadErrorPage(_gettext('Invalid MIME type for this filetype.'), $atype, $i, $filename);
+									$this->exitWithUploadErrorPage(_gettext('Invalid MIME type for this filetype.') . 'Required MIME is ' . $filetype_required_mime . ', but we have ' . $finfo_required_mime . '.', $atype, $i, $filename);
 								}
 								finfo_close($finfo);
 							}
