@@ -1,0 +1,85 @@
+body { margin: 8px; font: 9pt/1 Consolas, "Liberation Mono", Courier, monospace; }
+
+a, a:visited {
+	text-decoration: none;
+	color: #5E9083;
+}
+a:hover { color: #1EFF9A; }
+
+h1, h2 {
+	text-align: left;
+	background-repeat: repeat-x;
+}
+
+h1 {
+	margin-top:0; padding:0;
+	font-size: 1.5em;
+}
+h1 a {
+	padding: 4px 16px;
+	display: block;
+}
+
+h2 {
+	font-size: 100%;
+	margin-top: 1em;
+}
+
+.plus {
+	float: right;
+	font-size: 8pt;
+	width: 16px;
+	height: 13px;
+	text-align: center;
+	line-height: 12px;
+	font-weight: normal;
+	padding: 0;
+	margin: 0;
+	border-radius: 3px;
+	cursor: pointer;
+	box-sizing: border-box;
+	border: 1px solid transparent;
+	transition: all .10s ease-in-out;
+	-o-transition: all .10s ease-in-out;
+	-moz-transition: all .10s ease-in-out;
+	-webkit-transition: all .10s ease-in-out;
+}
+.plus:hover { color: #1EFF9A; }
+
+ul {
+	list-style: none;
+	padding-left: 0px;
+	margin: 0px;
+	background: #0a0a0a;
+}
+li { margin:0; padding:0; }
+ul li a {
+	padding: 1px 4px;
+	display: block;
+}
+ul li a:hover {
+	background: black;
+}
+
+li#sitestyles {
+	color: #666;
+	padding: 1px 4px;
+}
+li#sitestyles a {
+	font-size: 8pt;
+	padding: 0;
+	margin: 0;
+}
+
+::scrollbar { width: 6px; }
+::-o-scrollbar { width: 6px; }
+::-moz-scrollbar { width: 6px; }
+::-webkit-scrollbar { width: 6px; }
+::scrollbar-track { background: #111; }
+::-o-scrollbar-track { background: #111; }
+::-moz-scrollbar-track { background: #111; }
+::-webkit-scrollbar-track { background: #111; }
+::scrollbar-thumb { background: #00DA78; }
+::-o-scrollbar-thumb { background: #00DA78; }
+::-moz-scrollbar-thumb { background: #00DA78; }
+::-webkit-scrollbar-thumb { background: #00DA78; }
