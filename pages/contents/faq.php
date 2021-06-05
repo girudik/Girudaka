@@ -13,7 +13,7 @@
 [s]текст[/s] == <strike>текст</strike><br>
 [spoiler]спойлер[/spoiler], %%спойлер%% == <span style="background-color:black;" onmouseover="this.style.color='white';" onmouseout="this.style.color='black'">спойлер</span><br>
 [code]быдлокод();[/code] == <span style="font-family:monospace">быдлокод();</span> (с подсветкой, если это возможно)<br>
-[tex]e^{i\tau}=1 \,[/tex] == <img src="http://latex.codecogs.com/svg.latex?{\color[rgb]{0.8,0.8,0.8}e^{i\tau}=1}" /><br />
+[tex]e^{i\tau}=1 \,[/tex] == <img src="https://latex.codecogs.com/svg.latex?{\color[rgb]{0.8,0.8,0.8}e^{i\tau}=1}" /><br />
 <table border="0" style="font-size: 12px;">
 	<tbody>
 		<tr>
@@ -51,9 +51,7 @@
 </table>
 <hr style="border: none; border-top: 1px #AAA solid;">
 <h3>Как постить видео?</h3>
-Есть ссылка вида http://www.youtube.com/watch?v=<u>b1WWpKEPdT4</u>&amp;feature=related. <br>
-Выделяем подчеркнутую часть - это ID видео - и вставляем в поле "Видео" поста. <br>
-Для других видеосайтов всё аналогично.
+Просто добавляем ссылку в поле вложения.
          </td>
 </div>
     </td></tr>
