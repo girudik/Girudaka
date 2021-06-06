@@ -1,6 +1,6 @@
 <?php
 if(!isset($_GET['trip']) || strlen($_GET['trip']) != 10)
-	exit(json_encode(array('error'=>"wrong_code")));
+	exit(json_encode(array('error'=>"wrong_code"), JSON_UNESCAPED_UNICODE));
 
 $trip = $_GET['trip'];
 
@@ -23,4 +23,4 @@ $result = array(
 	'comments' => $posts['posts'] - $ops,
 	'active_on' => $active_on
 );
-exit(json_encode($result));
+exit(json_encode($result, JSON_UNESCAPED_UNICODE));

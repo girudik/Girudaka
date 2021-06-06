@@ -476,7 +476,7 @@ class Board {
 			$catalog_foot = $this->Footer(false, (microtime_float()-$executiontime_start_catalog));
 			$catalog_html = $catalog_head . '<noscript>'.$catalog_nojs.'</noscript>' . $catalog_foot;
 			$this->PrintPage(KU_BOARDSDIR . $this->board['name'] . '/catalog.html', $catalog_html, $this->board['name']);
-			$this->PrintPage(KU_BOARDSDIR . $this->board['name'] . '/catalog.json', json_encode($catalog_json), $this->board['name']);
+			$this->PrintPage(KU_BOARDSDIR . $this->board['name'] . '/catalog.json', json_encode($catalog_json, JSON_UNESCAPED_UNICODE), $this->board['name']);
 		} // ← build catalog
 
 		$this->DeleteOldPages($totalpages-1);

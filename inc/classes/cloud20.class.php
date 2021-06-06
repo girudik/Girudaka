@@ -28,7 +28,7 @@ class Cloud20 {
 			$boards10 []= $value;
 		}
 
-		file_put_contents(KU_ROOTDIR . '/boards10.json', json_encode($boards10), LOCK_EX);
-		file_put_contents(KU_ROOTDIR . '/boards20.json', json_encode($boards20), LOCK_EX);
+		file_put_contents(KU_ROOTDIR . '/boards10.json', json_encode($boards10, JSON_UNESCAPED_UNICODE), LOCK_EX);
+		file_put_contents(KU_ROOTDIR . '/boards20.json', json_encode($boards20, JSON_UNESCAPED_UNICODE), LOCK_EX);
 	}
 }

@@ -11,4 +11,4 @@ foreach ($brds as &$brd) {
 }
 unset($brd);
 
-exit(json_encode($result));
+exit(json_encode($result, JSON_UNESCAPED_UNICODE));

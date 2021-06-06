@@ -65,7 +65,7 @@ function notify($room, $data=array()) {
 		'token' => $_POST['token'], 
 		'timestamp' => time()
 	);
-	$data_string = json_encode(array_merge($data_c, $data));
+	$data_string = json_encode(array_merge($data_c, $data), JSON_UNESCAPED_UNICODE);
 
 	$ch = curl_init(KU_LOCAL_LIVEUPD_API.'/qr/'.KU_LIVEUPD_SITENAME);
 	curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
@@ -124,7 +124,7 @@ function error_redirect($url, $message) {
 	if ($_POST['AJAX']) {
 		exit(json_encode(array(
 			'error' => $message
-		)));
+		), JSON_UNESCAPED_UNICODE));
 	}
 	else {
 		do_redirect($url);
@@ -166,7 +166,7 @@ if (isset($board_class)) {
 		exit(json_encode(array(
 			'error' => _gettext('YOU ARE BANNED'),
 			'error_type' => 'ban'
-		)));
+		), JSON_UNESCAPED_UNICODE));
 	}
 }
 
@@ -899,7 +899,7 @@ elseif (
 		exit(json_encode(array(
 			'action' => 'multi_post_action',
 			'data' => $items_affected
-		)));
+		), JSON_UNESCAPED_UNICODE));
 	else
 		do_redirect(KU_BOARDSPATH . '/' . ($is_overboard ? I0_OVERBOARD_DIR : $board_class->board['name']) . '/');
 	die();
@@ -937,5 +937,5 @@ if ($_POST['AJAX']) {
 		'thread_replyto' => $thread_replyto,
 		'post_id' => $post_id,
 		'board' => $board_class->board['name']
-	)));
+	), JSON_UNESCAPED_UNICODE));
 }

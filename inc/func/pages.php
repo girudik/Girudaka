@@ -73,7 +73,7 @@ function RegenerateOverboard($boardlist=null) {
 				$boards[$thread['boardname']]->dwoo_data->assign('for_overboard', 1);
 				$boards[$thread['boardname']]->dwoo_data->assign('board', $boards[$thread['boardname']]->board);
 				// $pages[$current_page] .= $boards[$thread['boardname']]->Postbox(); // Add postboxes for every board with specific rules
-				// $pages[$current_page] .= "<script>over_board_info['".$thread['boardname']."'] = ".json_encode($boards[$thread['boardname']]->board)."</script>";
+				// $pages[$current_page] .= "<script>over_board_info['".$thread['boardname']."'] = ".json_encode($boards[$thread['boardname']]->board, JSON_UNESCAPED_UNICODE)."</script>";
 			}
 			// Generate thread piece
 			$threadling = $boards[$thread['boardname']]->GenerateOverboardThreadFragment($thread['id']);

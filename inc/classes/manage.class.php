@@ -3829,7 +3829,7 @@ class Manage {
 
 		$jsonfile = KU_ROOTDIR.'bnrs.json';
 		$final_results = $tc_db->GetAll("SELECT `link`, `path`, `version` FROM `" . KU_DBPREFIX . "banners`");
-		file_put_contents($jsonfile, json_encode($final_results), LOCK_EX);
+		file_put_contents($jsonfile, json_encode($final_results, JSON_UNESCAPED_UNICODE), LOCK_EX);
 	}
 
 	function banners() {

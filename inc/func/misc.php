@@ -29,7 +29,7 @@ function exitWithErrorPage($errormsg, $extended = '', $error_type=null, $error_d
         $resp['error_data'] = $error_data;
       }
     }
-    exit(json_encode($resp));
+    exit(json_encode($resp, JSON_UNESCAPED_UNICODE));
   }
 
   else {
@@ -64,7 +64,7 @@ function exitWithSuccessJSON($data=array()) {
   elseif ($data_type != 'array')
     $data = array('data' => $data);
   $data['error'] = false;
-  exit(json_encode($data));
+  exit(json_encode($data, JSON_UNESCAPED_UNICODE));
 }
 
 /**
@@ -111,14 +111,14 @@ function do_redirect($url, $useheader=false) {
 function ajax_error($errmsg) {
   exit(json_encode(array(
     'error' => $errmsg
-  )));
+  ), JSON_UNESCAPED_UNICODE));
 }
 
 function ajax_success($data) {
   exit(json_encode(array(
     'error' => false,
     'data' => $data
-  )));
+  ), JSON_UNESCAPED_UNICODE));
 }
 
 function check_css($css) {
@@ -163,7 +163,7 @@ function console_log($ret = false) {
 function get_console_log() {
   $args = func_get_args();
   foreach ($args as &$arg) {
-    $arg = json_encode($arg);
+    $arg = json_encode($arg, JSON_UNESCAPED_UNICODE);
   }
   $r = '<script>console.log('.implode(',', $args).')</script>';
   return $r;
