@@ -221,7 +221,11 @@ class Board {
 		// split threads into pages →
 		for ($i=0; $i < $total_threads; $i++) {
 			$current_page = floor($i / KU_THREADS);
-
+			if ($current_page > $to) { // don't rebuild all pages
+				$threads[$i]['page'] = $current_page;
+				$pages[$current_page] []= $threads[$i];
+				continue;
+			}
 			// fill thread stats →
 			$threads[$i]['page'] = $current_page;
 			/*$stats = $tc_db->GetAll("SELECT
