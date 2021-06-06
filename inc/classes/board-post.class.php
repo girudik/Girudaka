@@ -1198,10 +1198,10 @@ class Post extends Board {
 				AND
 				`id` IN (".implode(',', $post_ids).")");
 			// Physically delete all files
-			foreach($files as $file) {
+			/*foreach($files as $file) {
 				if ($file['file'] != 'removed' && $file['file_size'] > 0)
 					$this->EraseFileAndThumbs($file);
-			}
+			}*/
 			// Clear reports
 			$tc_db->Execute("DELETE FROM `".KU_DBPREFIX."reports`
 			 WHERE
