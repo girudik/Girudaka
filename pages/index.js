@@ -231,7 +231,11 @@ $(document).ready(function() {
 	drawContext.fillStyle = Grid.getPrimaryColor();
 
 	$('body').on('click', 'center a', function() {
-		$.get($(this).attr('href'), function(res) { 
+		var url = $(this).attr('href');
+		if (res == "/all") {
+			return true;
+		}
+		$.get(url, function(res) {
 			var buf = $('<div></div>').html(res).find('#boards').html(); 
 			$('#boards').html(buf);
 		});
