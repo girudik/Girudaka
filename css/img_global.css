@@ -3884,3 +3884,9 @@ summary.deleted {
 .deleted_thread {
 	color: red;
 }
+
+/* misc */
+.pb-long {
+	overflow: auto;
+	max-height: 500px;
+}
