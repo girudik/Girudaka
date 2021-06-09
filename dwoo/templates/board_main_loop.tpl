@@ -110,7 +110,7 @@
     <svg class="icon b-icon"><use xlink:href="#i-qr"></use></svg>
    </a>
    {if $board.balls}
-    <img class="_country_" src="{%KU_WEBPATH}/images/flags/{$post.country}.png">
+    <img loading="lazy" class="_country_" src="{%KU_WEBPATH}/images/flags/{$post.country}.png">
    {/if}
   </span>
   {if $post.parentid eq 0}
@@ -161,7 +161,7 @@
          {assign var="filename" value=get_embed_filename($embed)}
          <figcaption class="filesize">
           {strip}<a download="{$filename}.{$embed.file_type}" {if %KU_NEWWINDOW}target="_blank"{/if} href="{$file_path}/src/{$embed.file}.{$embed.file_type}" title="{$filename}{if $embed.id3.comments_html.title.0 eq ''}.{$embed.file_type}{/if}">
-           {if %I0_DETECT_SOSACH}{if is_from_sosach($filename)}<img class="sosach_indicator" src="/images/2chfav.ico">{/if}{/if}
+           {if %I0_DETECT_SOSACH}{if is_from_sosach($filename)}<img loading="lazy" class="sosach_indicator" src="/images/2chfav.ico">{/if}{/if}
            <span class="fc-filename"{* set_max_filename_width($embed.thumb_w, $embed.id3.comments_html.title.0) *}>
             {$filename}
            </span>
@@ -189,12 +189,12 @@
          <div class="embed-wrap">
           <div class="emb-iframe-wrapper" data-w="{$embed.image_w}" data-h="{$embed.image_h}" data-code="{$embed.file}" data-site="{$embed.site_name}"{if $embed.start} data-start="{$embed.start}" data-startraw="{$embed.file_size}"{/if}></div>
           <div class="embed-overlay"></div>
-          <img class="embed-thumbnail" src="{$file_path}/thumb/{str_replace('/', '_', $embed.thumbnail)}" alt="" height="{$embed.thumb_h}" width="{$embed.thumb_w}">
+          <img loading="lazy" class="embed-thumbnail" src="{$file_path}/thumb/{str_replace('/', '_', $embed.thumbnail)}" alt="" height="{$embed.thumb_h}" width="{$embed.thumb_w}">
           <div class="embed-title">
            <a href="{$embed.videourl}" target="_blank" title="{$embed.file_original} — {t}Watch on{/t} {$embed.site_name}">{$embed.file_original}</a>
           </div>
           {if $embed.file_size_formatted neq '0'}<div class="embed-duration">{$embed.file_size_formatted}</div>{/if}
-          <img src="{%KU_BOARDSFOLDER}images/site-logos/{strtolower($embed.site_name)}.png" alt="" class="embed-logo">
+          <img loading="lazy" src="{%KU_BOARDSFOLDER}images/site-logos/{strtolower($embed.site_name)}.png" alt="" class="embed-logo">
           <button type="submit" class="emb-button yesscript file-control file-menu-toggle emb-button" value="{$embed.file_id}">
            <svg class="icon"><use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#i-dots"></use></svg>
           </button>
@@ -209,7 +209,7 @@
          {/if}
          onclick="javascript:return expandimg('{$embed.file_id}', '{$file_path}/src/{$embed.file}.{$embed.file_type}', '{$file_path}/thumb/{$embed.file}s.{$embed.file_type}', '{$embed.image_w}', '{$embed.image_h}', '{$embed.thumb_w}', '{$embed.thumb_h}');" 
          href="{$file_path}/src/{$embed.file}.{$embed.file_type}">
-         <span id="thumb{$embed.file_id}"><img src="{$file_path}/thumb/{$embed.file}s.{$embed.file_type}" alt="{$post.id}" class="thumb" height="{$embed.thumb_h}" width="{$embed.thumb_w}" /></span>
+         <span id="thumb{$embed.file_id}"><img loading="lazy" src="{$file_path}/thumb/{$embed.file}s.{$embed.file_type}" alt="{$post.id}" class="thumb" height="{$embed.thumb_h}" width="{$embed.thumb_w}" /></span>
          </a>
         {elseif $embed.nonstandard_file neq ''}
          <a 
@@ -218,7 +218,7 @@
          {if $embed.file_type eq 'css'} class="csswrap" {/if}
          {if %KU_NEWWINDOW}target="_blank"{/if}        
          href="{$file_path}/src/{$embed.file}.{$embed.file_type}">
-         <div id="thumb{$post.id}"{if $embed.generic_icon eq ''} class="thumb playable-thumb" title="{t}Play{/t}"{/if}><img src="{$embed.nonstandard_file}" alt="{$post.id}" class="thumb" height="{$embed.thumb_h}" width="{$embed.thumb_w}" /></div>
+         <div id="thumb{$post.id}"{if $embed.generic_icon eq ''} class="thumb playable-thumb" title="{t}Play{/t}"{/if}><img loading="lazy" src="{$embed.nonstandard_file}" alt="{$post.id}" class="thumb" height="{$embed.thumb_h}" width="{$embed.thumb_w}" /></div>
          </a>
         {/if}
        </figure>

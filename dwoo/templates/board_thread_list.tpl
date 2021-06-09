@@ -84,7 +84,7 @@
 					{/if}
 					onclick="javascript: return expandimg('{$post.id}', '{$file_path}/src/{$post.file}.{$post.file_type}', '{$file_path}/thumb/{$post.file}s.{$post.file_type}', '{$post.image_w}', '{$post.image_h}', '{$post.thumb_w}', '{$post.thumb_h}');" 
 					href="{$file_path}/src/{$post.file}.{$post.file_type}">
-					<span id="thumb{$post.id}"><img src="{$file_path}/thumb/{$post.file}s.{$post.file_type}" alt="{$post.id}" class="thumb" height="{$post.thumb_h}" width="{$post.thumb_w}" /></span>
+					<span id="thumb{$post.id}"><img loading="lazy" src="{$file_path}/thumb/{$post.file}s.{$post.file_type}" alt="{$post.id}" class="thumb" height="{$post.thumb_h}" width="{$post.thumb_w}" /></span>
 					</a>
 				{/if}
 			{elseif $post.nonstandard_file neq ''}
@@ -101,7 +101,7 @@
 						target="_blank" 
 					{/if}								
 					href="{$file_path}/src/{$post.file}.{$post.file_type}">
-					<span id="thumb{$post.id}"><img src="{$post.nonstandard_file}" alt="{$post.id}" class="thumb" height="{$post.thumb_h}" width="{$post.thumb_w}" /></span>
+					<span id="thumb{$post.id}"><img loading="lazy" src="{$post.nonstandard_file}" alt="{$post.id}" class="thumb" height="{$post.thumb_h}" width="{$post.thumb_w}" /></span>
 					</a>
 				{/if}
 			{/if}
@@ -166,7 +166,7 @@
 				</a>
 			{/if}
 			{if $board.balls}
-			<img class="_country_" src="{%KU_WEBPATH}/images/flags/{$post.country}.png">
+			<img loading="lazy" class="_country_" src="{%KU_WEBPATH}/images/flags/{$post.country}.png">
 			{/if}
 			</span>
 			<span id="dnb-{$board.name}-{$post.id}-y"></span>
@@ -244,7 +244,7 @@
 						</a>
 						{/if}
 						{if $board.balls}
-						<img class="_country_" src="{%KU_WEBPATH}/images/flags/{$post.country}.png">
+						<img loading="lazy" class="_country_" src="{%KU_WEBPATH}/images/flags/{$post.country}.png">
 						{/if}
 						{if $post.locked eq 1}
 							<svg class="icon i-icon i-lock"><use xlink:href="#i-lock"></use></svg>
@@ -316,7 +316,7 @@
 								{/if}
 								onclick="javascript:return expandimg('{$post.id}', '{$file_path}/src/{$post.file}.{$post.file_type}', '{$file_path}/thumb/{$post.file}s.{$post.file_type}', '{$post.image_w}', '{$post.image_h}', '{$post.thumb_w}', '{$post.thumb_h}');" 
 								href="{$file_path}/src/{$post.file}.{$post.file_type}">
-								<span id="thumb{$post.id}"><img src="{$file_path}/thumb/{$post.file}s.{$post.file_type}" alt="{$post.id}" class="thumb" height="{$post.thumb_h}" width="{$post.thumb_w}" /></span>
+								<span id="thumb{$post.id}"><img loading="lazy" src="{$file_path}/thumb/{$post.file}s.{$post.file_type}" alt="{$post.id}" class="thumb" height="{$post.thumb_h}" width="{$post.thumb_w}" /></span>
 								</a>
 							{/if}
 						{elseif $post.nonstandard_file neq ''}
@@ -335,7 +335,7 @@
 						target="_blank" 
 					{/if}								
 					href="{$file_path}/src/{$post.file}.{$post.file_type}">
-					<span id="thumb{$post.id}"><img src="{$post.nonstandard_file}" alt="{$post.id}" class="thumb" height="{$post.thumb_h}" width="{$post.thumb_w}" /></span>
+					<span id="thumb{$post.id}"><img loading="lazy" src="{$post.nonstandard_file}" alt="{$post.id}" class="thumb" height="{$post.thumb_h}" width="{$post.thumb_w}" /></span>
 					</a>
 							{/if}
 						{/if}

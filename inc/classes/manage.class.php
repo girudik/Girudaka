@@ -2117,7 +2117,7 @@ class Manage {
 
 					$real_parentid = ($line['parentid'] == 0) ? $line['id'] : $line['parentid'];
 
-					$tpl_page .= '<tr><td><a href="'. KU_BOARDSPATH . '/'. $line['boardname'] . '/res/'. $real_parentid . '.html#'. $line['id'] . '">/'. $line['boardname'] . '/'. $line['id'] . '</td><td>'. (($line['file_type'] == 'jpg' || $line['file_type'] == 'gif' || $line['file_type'] == 'png') ? ('<a href="'. KU_WEBPATH .'/'. $line['boardname'] . '/src/'. $line['file'] . '.'. $line['file_type'] . '"><img border=0 src="'. KU_WEBPATH .'/'. $line['boardname'] . '/thumb/'. $line['file'] . 's.'. $line['file_type'] . '"></a>') : ('')) . '</td><td>'. $line['message'] . '</td><td>'. md5_decrypt($line['ip'], KU_RANDOMSEED) . '</tr>';
+					$tpl_page .= '<tr><td><a href="'. KU_BOARDSPATH . '/'. $line['boardname'] . '/res/'. $real_parentid . '.html#'. $line['id'] . '">/'. $line['boardname'] . '/'. $line['id'] . '</td><td>'. (($line['file_type'] == 'jpg' || $line['file_type'] == 'gif' || $line['file_type'] == 'png') ? ('<a href="'. KU_WEBPATH .'/'. $line['boardname'] . '/src/'. $line['file'] . '.'. $line['file_type'] . '"><img loading="lazy" border=0 src="'. KU_WEBPATH .'/'. $line['boardname'] . '/thumb/'. $line['file'] . 's.'. $line['file_type'] . '"></a>') : ('')) . '</td><td>'. $line['message'] . '</td><td>'. md5_decrypt($line['ip'], KU_RANDOMSEED) . '</tr>';
 				}
 				$tpl_page .= '</table>'. "\n";
 			} else {
@@ -2397,7 +2397,7 @@ class Manage {
 
 				if ($filename != "") {
 					$tpl_page .= "
-						<td style=\"vertical-align: top; width: 200px;\"><center><a href=\"". KU_WEBPATH ."/$board/src/$filename.$filetype\" target=\"_blank\"><img src=\"". KU_WEBPATH ."/$board/thumb/{$filename}s.$filetype\" border=\"0\"></a></center></td>
+						<td style=\"vertical-align: top; width: 200px;\"><center><a href=\"". KU_WEBPATH ."/$board/src/$filename.$filetype\" target=\"_blank\"><img loading=\"lazy\" src=\"". KU_WEBPATH ."/$board/thumb/{$filename}s.$filetype\" border=\"0\"></a></center></td>
 					";
 				}
 				if ($message == "") {
@@ -2450,7 +2450,7 @@ class Manage {
 						$tpl_page .= $name . $line['tripcode'] . formatDate($line['postedat']) . ' | '. _gettext('No.') .' '. $line['id'] . ' | '. _gettext('IP') .': '. md5_decrypt($line['ip'], KU_RANDOMSEED) . '<br />'. "\n";
 						if (isset($line['filename'])) {
 							$tpl_page .= '<a href="'. KU_WEBPATH . '/'. $_GET['board'] . '/src/'. $line['filename'] . '.'. $line['filetype'] . '" target="_blank">'. $line['filename'] . '.'. $line['filetype'] . '</a><br />'. "\n" .
-										'<a href="'. KU_WEBPATH . '/'. $_GET['board'] . '/src/'. $line['filename'] . '.'. $line['filetype'] . '" target="_blank"><img src="'. KU_WEBPATH . '/'. $_GET['board'] . '/thumb/'. $line['filename'] . 's.'. $line['filetype'] . '" border="0" alt="'. $line['filename'] . '.'. $line['filetype'] . '" /></a>'. "\n";
+										'<a href="'. KU_WEBPATH . '/'. $_GET['board'] . '/src/'. $line['filename'] . '.'. $line['filetype'] . '" target="_blank"><img loading="lazy" src="'. KU_WEBPATH . '/'. $_GET['board'] . '/thumb/'. $line['filename'] . 's.'. $line['filetype'] . '" border="0" alt="'. $line['filename'] . '.'. $line['filetype'] . '" /></a>'. "\n";
 						}
 						$tpl_page .= $line['message'];
 						$tpl_page .= '</div><br />';
@@ -2466,7 +2466,7 @@ class Manage {
 						$tpl_page .= $name . $line['tripcode'] . formatDate($line['postedat']) . ' | No. '. $line['id'] . ' | IP: '. md5_decrypt($line['ip'], KU_RANDOMSEED) . '<br />'. "\n";
 						if ($line['filename'] != '') {
 							$tpl_page .= '<a href="'. KU_WEBPATH . '/'. $_GET['board'] . '/src/'. $line['filename'] . '.'. $line['filetype'] . '" target="_blank">'. $line['filename'] . '.'. $line['filetype'] . '</a><br />'. "\n" .
-										'<a href="'. KU_WEBPATH . '/'. $_GET['board'] . '/src/'. $line['filename'] . '.'. $line['filetype'] . '" target="_blank"><img src="'. KU_WEBPATH . '/'. $_GET['board'] . '/thumb/'. $line['filename'] . 's.'. $line['filetype'] . '" border="0" alt="'. $line['filename'] . '.'. $line['filetype'] . '" /></a>'. "\n";
+										'<a href="'. KU_WEBPATH . '/'. $_GET['board'] . '/src/'. $line['filename'] . '.'. $line['filetype'] . '" target="_blank"><img loading="lazy" src="'. KU_WEBPATH . '/'. $_GET['board'] . '/thumb/'. $line['filename'] . 's.'. $line['filetype'] . '" border="0" alt="'. $line['filename'] . '.'. $line['filetype'] . '" /></a>'. "\n";
 						}
 						$tpl_page .= $line['message'];
 						$tpl_page .= '</div><br />';
@@ -4011,7 +4011,7 @@ class Manage {
 						.$tokeninput.'<div class="_td boardname">&#47;'.$brd.'&#47;</div>';
 					//second column:  * banner+fileinput
 					$tpl_page .= '<div class="_td bannerimg">';
-					if(isset($bb_kv[$brd])) $tpl_page .= '<img src="'.$pathprefix.$bb_kv[$brd]['path'].'?v='.$bb_kv[$brd]['version'].'" class="oldbanner"/><input class="newbanner" name="banner" type="file" style="display:none" />';
+					if(isset($bb_kv[$brd])) $tpl_page .= '<img loading="lazy" src="'.$pathprefix.$bb_kv[$brd]['path'].'?v='.$bb_kv[$brd]['version'].'" class="oldbanner"/><input class="newbanner" name="banner" type="file" style="display:none" />';
 					else $tpl_page .= '<input class="newbanner" name="banner" type="file" />';
 					$tpl_page .= '</div>';
 					//third column: actions
@@ -4050,7 +4050,7 @@ class Manage {
 						<div class="_td custom-link"><a class="custom-link-a" href="'.$banner['link'].'">'.preg_replace('#(http:\/\/(www\.)?)#','',$banner['link']).'</a>
 						<input class="custom-link-entry" type="text" value="'.$banner['link'].'" name="link" class="newlink" style="display:none" /></div>';
 					//second column: banner+fileinput
-					$tpl_page .= '<div class="_td bannerimg"><img class="oldbanner" src="'.$pathprefix.$banner['path'].'?v='.$banner['version'].'">
+					$tpl_page .= '<div class="_td bannerimg"><img loading="lazy" class="oldbanner" src="'.$pathprefix.$banner['path'].'?v='.$banner['version'].'">
 						<input class="newbanner" type="file" name="banner" style="display:none" /></div>';
 					//third column: actions
 					$tpl_page .= '<div class="_td actions"><div class="normal-buttons">
@@ -4599,7 +4599,7 @@ class Manage {
 						} elseif ($line['file'] == '') {
 							$tpl_page .= 'none';
 						} elseif ($line['file_type'] == 'jpg' || $line['file_type'] == 'gif' || $line['file_type'] == 'png') {
-							$tpl_page .= '<a href="'. KU_BOARDSPATH . '/'. $linereport['board'] . '/src/'. $line['file'] . '.'. $line['file_type'] . '"><img src="'. KU_BOARDSPATH . '/'. $linereport['board'] . '/thumb/'. $line['file'] . 's.'. $line['file_type'] . '" border="0"></a>';
+							$tpl_page .= '<a href="'. KU_BOARDSPATH . '/'. $linereport['board'] . '/src/'. $line['file'] . '.'. $line['file_type'] . '"><img loading="lazy" src="'. KU_BOARDSPATH . '/'. $linereport['board'] . '/thumb/'. $line['file'] . 's.'. $line['file_type'] . '" border="0"></a>';
 						} else {
 							$tpl_page .= '<a href="'. KU_BOARDSPATH . '/'. $linereport['board'] . '/src/'. $line['file'] . '.'. $line['file_type'] . '">File</a>';
 						}
@@ -5299,7 +5299,7 @@ class Manage {
 				foreach ($results as $line) {
 					$reviewsql .= '(`boardid` = '.$line['boardid'] .' AND `id` = '. $line['id'] . ') OR ';
 					$real_parentid = ($line['parentid'] == 0) ? $line['id'] : $line['parentid'];
-					$tpl_page .= '<tr><td><a href="'. KU_BOARDSPATH . '/'. $line['boardname'] . '/res/'. $real_parentid . '.html#'. $line['id'] . '">/'. $line['boardname'] . '/'. $line['id'] . '</td><td><a href="'. KU_BOARDSPATH . '/'. $line['boardname'] . '/res/'. $real_parentid . '.html#'. $line['id'] . '"><img src="'. KU_BOARDSPATH . '/'. $line['boardname'] . '/thumb/'. $line['file'] . 's.'. $line['file_type'] . '" width="'. $line['thumb_w'] . '" height="'. $line['thumb_h'] . '" border="0"></a></td></tr>';
+					$tpl_page .= '<tr><td><a href="'. KU_BOARDSPATH . '/'. $line['boardname'] . '/res/'. $real_parentid . '.html#'. $line['id'] . '">/'. $line['boardname'] . '/'. $line['id'] . '</td><td><a href="'. KU_BOARDSPATH . '/'. $line['boardname'] . '/res/'. $real_parentid . '.html#'. $line['id'] . '"><img loading="lazy" src="'. KU_BOARDSPATH . '/'. $line['boardname'] . '/thumb/'. $line['file'] . 's.'. $line['file_type'] . '" width="'. $line['thumb_w'] . '" height="'. $line['thumb_h'] . '" border="0"></a></td></tr>';
 				}
 				$tpl_page .= '</table>';
 
