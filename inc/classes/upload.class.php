@@ -174,7 +174,7 @@ class Upload {
 			if ($matches) {
 				$time = 0;
 				$site = $s;
-				if ($site = "you") {
+				if ($site == "you") {
 					if ($matches['code']) {
 						$code = $matches['code'];
 					} else {
