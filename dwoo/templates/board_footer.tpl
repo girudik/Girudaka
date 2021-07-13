@@ -9,7 +9,10 @@
 		<input type="text" name="captcha" placeholder="{t}Captcha{/t}" style="margin-top:4px" accesskey="c" style="vertical-align: middle" autocomplete="off">
 	</details></td></tr></noscript>
 	<tr><td>
-	<input name="deletepost" value="{t}Delete post{/t}" type="submit" class="styled-button bad-button" />{if $board.opmod}<label for="opmod">(<input type="checkbox" id="opmod" name="opdelete" value="1">{t}as OP{/t})</label>
+	<input name="deletepost" value="{t}Delete post{/t}" type="submit" class="styled-button bad-button" />
+	<input name="moddelete" value="{t}DPM{/t}" type="submit" class="styled-button bad-button" />
+
+	{if $board.opmod}<label for="opmod">(<input type="checkbox" id="opmod" name="opdelete" value="1">{t}as OP{/t})</label>
 	{/if}
 	</td></tr>
 	{if $board.enablereporting eq 1}
