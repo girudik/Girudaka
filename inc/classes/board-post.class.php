@@ -456,7 +456,7 @@ class Board {
 									$file_found['file_type'] = 'jpg';
 								if (in_array($file_found['file_type'], array('jpg', 'png', 'gif'))) {
 									$file_path = getCLBoardPath($this->board['name'], $this->board['loadbalanceurl_formatted'], $this->archive_dir);
-									$catalog_nojs .= '<img loading="lazy" src="' . $file_path . '/thumb/' . $file_found['file'] . 'c.' . $file_found['file_type'] . '" alt="' . $thread['id'] . '" border="0" />';
+									$catalog_nojs .= '<img loading="lazy" width="100" height="100" style="object-fit: cover;" src="' . $file_path . '/thumb/' . $file_found['file'] . 'c.' . $file_found['file_type'] . '" alt="' . $thread['id'] . '" border="0" />';
 								}
 								else {
 									$catalog_nojs .= _gettext('File');
