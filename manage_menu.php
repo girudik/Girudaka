@@ -134,7 +134,15 @@ if (!$manage_class->ValidateSession(true)) {
 	</ul></div>';
 	// Moderation
 	if ($manage_class->CurrentUserIsAdministrator() || $manage_class->CurrentUserIsModerator()) {
-		$open_reports = $tc_db->GetAll("SELECT HIGH_PRIORITY COUNT(*) FROM `" . KU_DBPREFIX . "reports` WHERE `cleared` = '0'");
+		$resultsboard = $tc_db->GetAll("SELECT HIGH_PRIORITY * FROM `" . KU_DBPREFIX . "boards` ORDER BY `name`");
+		$allowboards = [];
+		foreach ($resultsboard as $lineboard) {
+			if ($manage_class->CurrentUserIsModeratorOfBoard($lineboard['name'], $_SESSION['manageusername'])) {
+				$allowboards[] = "'". $lineboard['name'] ."'";
+			}
+		}
+		//$open_reports = $tc_db->GetAll("SELECT HIGH_PRIORITY COUNT(*) FROM `" . KU_DBPREFIX . "reports` WHERE `cleared` = '0' and `board` IN (". implode(",", $allowboards) .");");
+		$open_reports = $tc_db->GetAll("SELECT HIGH_PRIORITY COUNT(*) FROM `" . KU_DBPREFIX . "reports` AS r JOIN `" . KU_DBPREFIX . "posts` AS p ON r.postid = p.id WHERE `cleared` = '0' and `board` IN (". implode(",", $allowboards) .");");
 		$tpl_links .= section_html(_gettext('Moderation'), 'moderation') .
 		'<ul>
 		<li><a href="manage_page.php?action=reports">' . _gettext('View Reports') . ' [' . $open_reports[0][0] . ']</a></li>
