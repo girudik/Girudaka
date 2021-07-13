@@ -251,6 +251,7 @@ function editmode() {
 	$('#nullgrid').addClass('edit-mode');
 	$('#playSwitcher').hide();
 }
+window.editmode = editmode;
 
 var fade = {in: 0, out: 300, await: 0};
 var effect = true;
@@ -386,7 +387,7 @@ var imBlue = { pattern:
 	'cccc444444cc'+
 	'ccc4444444cc'+
 	'0cccccccccc0'+
-	'00cccccccc00', x: 12, y: 18 }; 
+	'00cccccccc00', x: 12, y: 18 };
 // defaultPattern = imBlue;
 
 try {
@@ -420,9 +421,9 @@ if(audio.supported) {
 	
 	visualizer = new VisualizerSample();
 } else {
-	console.error("AudioContext отсутствует!");
-	console.warn("В Tor Browser он недоступен из-за приватности, подробнее здесь: https://gitlab.torproject.org/legacy/trac/-/issues/20369");
-	$('#playSwitcher').html('<b style="color:red">Музыка в вашем браузере не поддерживается! Нажмите F12 для подробностей.</b>').off();
+	console.error("AudioContext отсутствует! Требуется включить в about:config dom.webaudio.enabled -> true");
+	//console.warn("В Tor Browser он недоступен из-за приватности, подробнее здесь: https://gitlab.torproject.org/legacy/trac/-/issues/20369");
+	$('#playSwitcher').html('<b style="color:red">Для работы музыки необходимо включить webaudio в about:config где dom.webaudio.enabled -> true.</b>').off();
 }
 
 audio.stop = function() {
