@@ -72,6 +72,11 @@ function RegenerateOverboard($boardlist=null, $return_page=-1, $return_output=fa
 			if ($thread['IS_DELETED'] == 1) {
 				$deleted_threads++;
 			}
+			if ($return_output && ($current_page != $return_page)) {
+				$pages[$current_page] .= "";
+				$i++;
+				continue;
+			}
 			// For all the boards involved create a board_class instance
 			if (!isset($boards[$thread['boardname']])) { // (only if it's not already created)
 				$boards[$thread['boardname']] = new Board($thread['boardname'], true, true);

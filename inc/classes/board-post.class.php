@@ -260,6 +260,11 @@ class Board {
 			if ($threads[$i]['IS_DELETED'] == 1) {
 				$deleted_threads++;
 			}
+			if ($from == $to && $current_page != $to) { // skip no need pages
+				$threads[$i]['page'] = $current_page;
+				$pages[$current_page] []= $threads[$i];
+				continue;
+			}
 			if ($current_page-1 > $to) { // don't rebuild all pages
 				$threads[$i]['page'] = $current_page;
 				$pages[$current_page] []= $threads[$i];
