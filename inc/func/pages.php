@@ -26,7 +26,7 @@ function print_page($filename, $contents, $board) {
 	chmod($filename, 0664); /* it was created 0600 */
 }
 
-function RegenerateOverboard($boardlist=null) {
+function RegenerateOverboard($boardlist=null, $return_page=-1, $return_output=false) {
 	global $tc_db;
 	$tc_db->SetFetchMode(ADODB_FETCH_ASSOC);
 

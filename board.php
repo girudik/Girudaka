@@ -489,9 +489,10 @@ if (isset($_POST['makepost'])) { // A more evident way to identify post action, 
 		// Trim any threads which have been pushed past the limit, or exceed the maximum age limit
 		TrimToPageLimit($board_class->board);
 
-		// Regenerate board pages
-		$board_class->RegeneratePages($page_from, $page_to);
-
+		if (!KU_NEWCACHE_LOGIC) {
+			// Regenerate board pages
+			$board_class->RegeneratePages($page_from, $page_to);
+		}
 		// Regeneate JSON
 		$cl20 = new Cloud20();
 		$cl20->rebuild();
@@ -515,17 +516,37 @@ if (isset($_POST['makepost'])) { // A more evident way to identify post action, 
 			$board_class->RegenerateThreads($thread_replyto);
 			notify($board_class->board['name'].':'.$thread_replyto, array('action' => 'new_reply', 'reply_id' => $post_id));
 		}
-
+		
 		// Regenerate overboard if it makes sense
-		if ($need_overboard) {
+		if (!KU_NEWCACHE_LOGIC && $need_overboard) {
 			RegenerateOverboard($board_class->board['boardlist']);
 		}
-	} 
-	else {
+		
+		if (KU_NEWCACHE_LOGIC) {
+			$dir = KU_BOARDSDIR.$board_class->board['name'];
+			$files = glob("$dir/*.html");
+			if (is_array($files)) {
+				foreach ($files as $htmlfile) {
+					unlink($htmlfile);
+				}
+			}
+			@unlink($dir . "/catalog.json");
+			
+			if ($need_overboard) {
+				$dir = KU_BOARDSDIR.I0_OVERBOARD_DIR;
+				$files = glob("$dir/*.html");
+				if (is_array($files)) {
+					foreach ($files as $htmlfile) {
+						unlink($htmlfile);
+					}
+				}
+			}
+		}
+
+	} else {
 		exitWithErrorPage(_gettext('Sorry, this board is locked and can not be posted in.'));
 	}
-}
-elseif (
+} elseif (
 	(
 		(
 			isset($_POST['deletepost'])
@@ -696,6 +717,7 @@ elseif (
 					$isownpost = !$ismod && !$isop;
 					$delres = $post_class->Delete(false, $isownpost && I0_ERASE_DELETED, $ismod);
 					if ($delres) {
+
 						if ($delres !== 'already_deleted') { // Skip the unneeded rebuild if the post is already deleted
 							if (! isset($notifications_del[$room_id]))
 								$notifications_del[$room_id] = array();
@@ -855,6 +877,8 @@ elseif (
 			}
 		}
 	}
+	
+	
 	foreach($pages_to_regenerate as $brd=>$pages) {
 		$out_of_range = array();
 		foreach($pages as $page) {
@@ -868,14 +892,18 @@ elseif (
 			count($out_of_range) != 0
 		) {
 			if ($is_overboard || $board_class->board['name'] != $brd) {
-				$external_boards[$brd]->RegeneratePages($pages_from[$brd], $pages_to[$brd], $out_of_range);
+				if (!KU_NEWCACHE_LOGIC) {
+					$external_boards[$brd]->RegeneratePages($pages_from[$brd], $pages_to[$brd], $out_of_range);
+				}
 				if (I0_OVERBOARD_ENABLED && !$need_overboard && $external_boards[$brd]->board['section'] != '0' && $external_boards[$brd]->board['hidden'] == '0') {
 					$need_overboard = true;
 					$over_boardlist = $external_boards[$brd]->board['boardlist'];
 				}
 			}
 			else {
-				$board_class->RegeneratePages($pages_from[$brd], $pages_to[$brd], $out_of_range);
+				if (!KU_NEWCACHE_LOGIC) {
+					$board_class->RegeneratePages($pages_from[$brd], $pages_to[$brd], $out_of_range);
+				}
 				if (I0_OVERBOARD_ENABLED && !$need_overboard && $board_class->board['section'] != '0' && $board_class->board['hidden'] == '0') {
 					$need_overboard = true;
 					$over_boardlist = $board_class->board['boardlist'];
@@ -884,10 +912,31 @@ elseif (
 		}
 	}
 	// Regenerate overboard if it makes sense
-	if ($need_overboard) {
+	if (!KU_NEWCACHE_LOGIC && $need_overboard) {
 		RegenerateOverboard($over_boardlist);
 	}
 	
+	if (KU_NEWCACHE_LOGIC) {
+		$dir = KU_BOARDSDIR.$board_class->board['name'];
+		$files = glob("$dir/*.html");
+		if (is_array($files)) {
+			foreach ($files as $htmlfile) {
+				unlink($htmlfile);
+			}
+		}
+		@unlink($dir . "/catalog.json");
+		
+		if ($need_overboard) {
+			$dir = KU_BOARDSDIR.I0_OVERBOARD_DIR;
+			$files = glob("$dir/*.html");
+			if (is_array($files)) {
+				foreach ($files as $htmlfile) {
+					unlink($htmlfile);
+				}
+			}
+		}
+	}
+
 	// Finish
 	foreach ($notifications_del as $room=>$data) {
 		notify($room, array('action' => 'delete', 'items' => $data));

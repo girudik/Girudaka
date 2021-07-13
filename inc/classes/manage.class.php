@@ -2730,7 +2730,17 @@ class Manage {
 			flush();
 		}
 		if ($need_overboard) {
-			RegenerateOverboard($over_boardlist);
+			if (KU_NEWCACHE_LOGIC) {
+				$dir = KU_BOARDSDIR.I0_OVERBOARD_DIR;
+				$files = glob("$dir/*.html");
+				if (is_array($files)) {
+					foreach ($files as $htmlfile) {
+						unlink($htmlfile);
+					}
+				}
+			} else {
+				RegenerateOverboard($over_boardlist);
+			}
 			$tpl_page .= _gettext('Regenerated Overboard') .'<br />';
 		}
 		require_once KU_ROOTDIR . 'inc/classes/menu.class.php';
@@ -4490,10 +4500,21 @@ class Manage {
 								}
 								$post_class = new Post($delpost_id, $board_dir, $board_id);
 								$post_class->Delete();
-								$board_class = new Board($board_dir);
-								$board_class->RegenerateThreads($delpost_parentid);
-								$board_class->RegeneratePages();
-								unset($board_class);
+								if (KU_NEWCACHE_LOGIC) {
+									$dir = KU_BOARDSDIR.$board_dir;
+									$files = glob("$dir/*.html");
+									if (is_array($files)) {
+										foreach ($files as $htmlfile) {
+											unlink($htmlfile);
+										}
+									}
+									unlink(KU_BOARDSDIR.$board_dir."/res/".$delpost_parentid.".html");
+								} else {
+									$board_class = new Board($board_dir);
+									$board_class->RegenerateThreads($delpost_parentid);
+									$board_class->RegeneratePages();
+									unset($board_class);
+								}
 								unset($post_class);
 								$tpl_page .= _gettext('Post '.$delpost_id.' successfully deleted.');
 								management_addlogentry(_gettext('Deleted post') . ' #<a href="?action=viewthread&thread='. $delpost_parentid . '&board='. $_POST['boarddir'] . '#'. $delpost_id . '">'. $delpost_id . '</a> - /'. $board_dir . '/', 7);
@@ -4830,10 +4851,24 @@ class Manage {
 				if (count($regenerated) > 0) {
 					$board_class = new Board($ban_board);
 					foreach($regenerated as $thread) {
-						$board_class->RegenerateThreads($thread);
+						if (KU_NEWCACHE_LOGIC) {
+							unlink(KU_BOARDSDIR.$ban_board."/res/".$thread.".html");
+						} else {
+							$board_class->RegenerateThreads($thread);
+						}
 					}
-					$board_class->RegeneratePages(); // TODO: optimize (maybe in another life)
-					unset($board_class);
+					if (KU_NEWCACHE_LOGIC) {
+						$dir = KU_BOARDSDIR.$ban_board;
+						$files = glob("$dir/*.html");
+						if (is_array($files)) {
+							foreach ($files as $htmlfile) {
+								unlink($htmlfile);
+							}
+						}
+					} else {
+						$board_class->RegeneratePages();
+						unset($board_class);
+					}
 				}
 
 				if(isset($_POST['deleteposts'])) {

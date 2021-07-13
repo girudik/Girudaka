@@ -145,10 +145,44 @@ class Board {
 	 * Regenerate all board and thread pages
 	 */
 	function RegenerateAll($except_boardlist=false) {
-		$this->RegeneratePages();
-		$this->RegenerateThreads();
-		if (I0_OVERBOARD_ENABLED && !$except_boardlist && $this->board['section'] != '0' && $this->board['hidden'] == '0')
-			RegenerateOverboard($this->board['boardlist']);
+		global $tc_db;
+		$need_overboard = I0_OVERBOARD_ENABLED && !$except_boardlist && $this->board['section'] != '0' && $this->board['hidden'] == '0';
+		if (KU_NEWCACHE_LOGIC) {
+			$boards = $tc_db->getAll("SELECT name from `".KU_DBPREFIX."boards`;");
+			foreach($boards as $board) {
+				$dir = KU_BOARDSDIR.$board["name"];
+				$files = glob("$dir/*.html");
+				if (is_array($files)) {
+					foreach ($files as $htmlfile) {
+						unlink($htmlfile);
+					}
+				}
+				@unlink($dir . "/catalog.json");
+				// threads
+				$dir = KU_BOARDSDIR.$board["name"]."/res";
+				$files = glob("$dir/*.html");
+				if (is_array($files)) {
+					foreach ($files as $htmlfile) {
+						unlink($htmlfile);
+					}
+				}
+			}
+			if ($need_overboard) {
+				$dir = KU_BOARDSDIR.I0_OVERBOARD_DIR;
+				$files = glob("$dir/*.html");
+				if (is_array($files)) {
+					foreach ($files as $htmlfile) {
+						unlink($htmlfile);
+					}
+				}
+			}
+		} else {
+			$this->RegeneratePages();
+			$this->RegenerateThreads();
+			if($need_overboard) {
+				RegenerateOverboard($this->board['boardlist']);
+			}
+		}
 	}
 
 	/**
@@ -195,7 +229,7 @@ class Board {
 	/**
 	 * Regenerate pages ($from #page $to #page)
 	 */
-	function RegeneratePages($from=-1, $to=INF, $singles=array(), $on_demand=false) {
+	function RegeneratePages($from=-1, $to=INF, $singles=array(), $on_demand=false, $return_output=false, $return_catalog=false, $return_catalog_format="") {
 		global $tc_db, $CURRENTLOCALE;
 		$tc_db->SetFetchMode(ADODB_FETCH_ASSOC);
 		$this->InitializeDwoo();
@@ -364,11 +398,20 @@ class Board {
 				$content = str_replace("\t", '',$content);
 				$content = str_replace("&nbsp;\r\n", '&nbsp;',$content);
 
-				$filename = KU_BOARDSDIR.$this->board['name'].'/'.($page==0 ? KU_FIRSTPAGE : '/'.$page.'.html');
-				if (!file_exists($filename)) {
-					@mkdir(pathinfo($filename, PATHINFO_DIRNAME), 0755, true);
+				if ($return_output && !$return_catalog) {
+					$filename = KU_BOARDSDIR.$this->board['name'].'/'.($page==0 ? KU_FIRSTPAGE : '/'.$page.'.html');
+					if (!file_exists($filename)) {
+						@mkdir(pathinfo($filename, PATHINFO_DIRNAME), 0755, true);
+					}
+					$this->PrintPage($filename, $content, $this->board['name']);
+					return $content;
+				} else {
+					$filename = KU_BOARDSDIR.$this->board['name'].'/'.($page==0 ? KU_FIRSTPAGE : '/'.$page.'.html');
+					if (!file_exists($filename)) {
+						@mkdir(pathinfo($filename, PATHINFO_DIRNAME), 0755, true);
+					}
+					$this->PrintPage($filename, $content, $this->board['name']);
 				}
-				$this->PrintPage($filename, $content, $this->board['name']);
 			}
 			$page++;
 		} // ← rebuild pages needing to be rebuilt
@@ -479,8 +522,23 @@ class Board {
 			$catalog_nojs .= '</tr>' . "\n" . '</table><br /><hr />';
 			$catalog_foot = $this->Footer(false, (microtime_float()-$executiontime_start_catalog));
 			$catalog_html = $catalog_head . '<noscript>'.$catalog_nojs.'</noscript>' . $catalog_foot;
-			$this->PrintPage(KU_BOARDSDIR . $this->board['name'] . '/catalog.html', $catalog_html, $this->board['name']);
-			$this->PrintPage(KU_BOARDSDIR . $this->board['name'] . '/catalog.json', json_encode($catalog_json, JSON_UNESCAPED_UNICODE), $this->board['name']);
+			if ($return_catalog && $return_output) {
+				$content = "";
+				switch ($return_catalog_format) {
+					case "html":
+						$content = $catalog_html;
+						break;
+					case "json":
+						$content = json_encode($catalog_json, JSON_UNESCAPED_UNICODE);
+						break;
+				}
+				$this->PrintPage(KU_BOARDSDIR . $this->board['name'] . '/catalog.html', $catalog_html, $this->board['name']);
+				$this->PrintPage(KU_BOARDSDIR . $this->board['name'] . '/catalog.json', json_encode($catalog_json, JSON_UNESCAPED_UNICODE), $this->board['name']);
+				return $content;
+			} else {
+				$this->PrintPage(KU_BOARDSDIR . $this->board['name'] . '/catalog.html', $catalog_html, $this->board['name']);
+				$this->PrintPage(KU_BOARDSDIR . $this->board['name'] . '/catalog.json', json_encode($catalog_json, JSON_UNESCAPED_UNICODE), $this->board['name']);
+			}
 		} // ← build catalog
 
 		$this->DeleteOldPages($totalpages-1);
@@ -654,6 +712,9 @@ class Board {
 			$content = str_replace("\t", '',$content);
 			$content = str_replace("&nbsp;\r\n", '&nbsp;',$content);
 			$this->PrintPage(KU_BOARDSDIR . $this->board['name'] . $this->archive_dir . '/res/' . $id . '.html', $content, $this->board['name']);
+			if ($return_output) {
+				return $content;
+			}
 			/*if (KU_FIRSTLAST) {
 
 				$replycount = (count($posts)-1);
