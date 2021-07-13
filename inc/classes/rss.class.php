@@ -27,7 +27,7 @@ class RSS {
 			require_once KU_ROOTDIR.'lib/dwoo.php';
 			$dwoo = new Dwoo();
 			$dwoo_data = new Dwoo_Data();
-			$posts = $tc_db->GetAll("SELECT * FROM `".KU_DBPREFIX."posts` WHERE `boardid` = " . $rssboardid . " AND `IS_DELETED` = '0' ORDER BY `id` DESC LIMIT 15");
+			$posts = $tc_db->GetAll("SELECT * FROM `".KU_DBPREFIX."posts` WHERE `boardid` = " . $rssboardid . " AND `IS_DELETED` = '0' ORDER BY `id` DESC LIMIT ".KU_RSS_LIMIT);
 			$dwoo_data->assign('posts', $posts);
 			$dwoo_data->assign('boardname', $rssboard);
 			$rss = $dwoo->get(KU_TEMPLATEDIR . '/rss_board.tpl', $dwoo_data);
@@ -40,7 +40,7 @@ class RSS {
 		require_once KU_ROOTDIR.'lib/dwoo.php';
 		$dwoo = new Dwoo();
 		$dwoo_data = new Dwoo_Data();
-		$entries = $tc_db->GetAll("SELECT * FROM `".KU_DBPREFIX."modlog` ORDER BY `timestamp` DESC LIMIT 15");
+		$entries = $tc_db->GetAll("SELECT * FROM `".KU_DBPREFIX."modlog` ORDER BY `timestamp` DESC LIMIT ".KU_RSS_LIMIT);
 		$dwoo_data->assign('entries', $entries);
 		$rss = $dwoo->get(KU_TEMPLATEDIR . '/rss_mod.tpl', $dwoo_data);
 

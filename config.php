@@ -207,6 +207,7 @@ if (!$cache_loaded) {
 
 		// Misc config
 		$cf['KU_MODLOGDAYS']        = 7; // Days to keep modlog entries before removing them
+		$cf['KU_RSS_LIMIT']         = 15; // limits for modlogrss.xml
 		$cf['KU_RANDOMSEED']        = 'ENTERANOTHERRANDOMSHIT'; // Type a bunch of random letters/numbers here, any large amount (35+ characters) will do
 		$cf['KU_STATICMENU']        = false; // Whether or not to generate the menu files as static files, instead of linking to menu.php.  Enabling this will reduce load, however some users have had trouble with getting the files to generate
 		$cf['KU_GENERATEBOARDLIST'] = true; // Set to true to automatically make the board list which is displayed ad the top and bottom of the board pages, or false to use the boards.html file
