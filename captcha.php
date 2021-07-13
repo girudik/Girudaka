@@ -8,7 +8,7 @@ include 'nrand.php';
 $canvas_height = 30;
 $canvas_width = 150;
 
-$lines = 5;
+$lines = KU_CAPTCHANUMLINES;
 
 $fonts = array(
 	array(
@@ -23,6 +23,128 @@ $fonts = array(
 // Determine the character set
 $langs = array("ru", "en", "num");
 
+// based on HKCaptcha http://www.lagom.nl/linux/hkcaptcha/ from jaws
+function warped_image($tmpimg, $img)
+{
+	$numpoles = 3;
+	$height = imagesy($img);
+	$width  = imagesx($img);
+
+	// make an array of poles AKA attractor points
+	for ($i = 0; $i < $numpoles; ++$i) {
+		do {
+			$px[$i] = rand(0, $width);
+		} while ($px[$i] >= $width*0.3 && $px[$i] <= $width*0.7);
+
+		do {
+			$py[$i] = rand(0, $height);
+		} while ($py[$i] >= $height*0.3 && $py[$i] <= $height*0.7);
+
+		$rad[$i] = rand($width*0.4, $width*0.8);
+		$amp[$i] = -0.0001 * rand(0,9999) * 0.15 - 0.15;
+	}
+
+	// get img properties bgcolor
+	$bgcol = imagecolorat($tmpimg, 1, 1);
+	$iscale  = imagesy($tmpimg) / imagesy($img);
+
+	// loop over $img pixels, take pixels from $tmpimg with distortion field
+	for ($ix = 0; $ix < $width; ++$ix) {
+		for ($iy = 0; $iy < $height; ++$iy) {
+			$x = $ix;
+			$y = $iy;
+			for ($i = 0; $i < $numpoles; ++$i) {
+				$dx = $ix - $px[$i];
+				$dy = $iy - $py[$i];
+				if ($dx == 0 && $dy == 0) {
+					continue;
+				}
+
+				$r = sqrt($dx*$dx + $dy*$dy);
+				if ($r > $rad[$i]) {
+				  continue;
+				}
+
+				$rscale = $amp[$i] * sin(3.14*$r/$rad[$i]);
+				$x += $dx*$rscale;
+				$y += $dy*$rscale;
+			}
+
+			$c = $bgcol;
+			$x *= $iscale;
+			$y *= $iscale;
+			if ($x >= 0 && $x < imagesx($tmpimg) && $y >= 0 && $y < imagesy($tmpimg)) {
+				$c = imagecolorat($tmpimg, $x, $y);
+			}
+
+			imagesetpixel($img, $ix, $iy, $c);
+		}
+	}
+}
+
+// wiggly random line centered at specified coordinates
+function randomline($img, $col, $x, $y) {
+	$theta = (frand()-0.5)*M_PI*0.7;
+	global $imgwid;
+	$len = rand($imgwid*0.4,$imgwid*0.7);
+	$lwid = rand(0,2);
+
+	$k = frand()*0.6+0.2; $k = $k*$k*0.5;
+	$phi = frand()*6.28;
+	$step = 0.5;
+	$dx = $step*cos($theta);
+	$dy = $step*sin($theta);
+	$n = $len/$step;
+	$amp = 1.5*frand()/($k+5.0/$len);
+	$x0 = $x - 0.5*$len*cos($theta);
+	$y0 = $y - 0.5*$len*sin($theta);
+
+	$ldx = round(-$dy*$lwid);
+	$ldy = round($dx*$lwid);
+	for ($i = 0; $i < $n; ++$i) {
+	$x = $x0+$i*$dx + $amp*$dy*sin($k*$i*$step+$phi);
+	$y = $y0+$i*$dy - $amp*$dx*sin($k*$i*$step+$phi);
+		imagefilledrectangle($img, $x, $y, $x+$lwid, $y+$lwid, $col);
+	}
+}
+// amp = amplitude (<1), num=numwobb (<1)
+function imagewobblecircle($img, $xc, $yc, $r, $wid, $amp, $num, $col) {
+	$dphi = 1;
+	if ($r > 0)
+		$dphi = 1/(6.28*$r);
+	$woffs = rand(0,100)*0.06283;
+	for ($phi = 0; $phi < 6.3; $phi += $dphi) {
+		$r1 = $r * (1-$amp*(0.5+0.5*sin($phi*$num+$woffs)));
+		$x = $xc + $r1*cos($phi);
+		$y = $yc + $r1*sin($phi);
+		imagefilledrectangle($img, $x, $y, $x+$wid, $y+$wid, $col);
+	}
+}
+
+
+// from php docs
+function imagelinethick($image, $x1, $y1, $x2, $y2, $color, $thick = 1)
+{
+	if ($thick == 1) {
+		return imageline($image, $x1, $y1, $x2, $y2, $color);
+	}
+	$t = $thick / 2 - 0.5;
+	if ($x1 == $x2 || $y1 == $y2) {
+		return imagefilledrectangle($image, round(min($x1, $x2) - $t), round(min($y1, $y2) - $t), round(max($x1, $x2) + $t), round(max($y1, $y2) + $t), $color);
+	}
+	$k = ($y2 - $y1) / ($x2 - $x1); //y = kx + q
+	$a = $t / sqrt(1 + pow($k, 2));
+	$points = array(
+		round($x1 - (1+$k)*$a), round($y1 + (1-$k)*$a),
+		round($x1 - (1-$k)*$a), round($y1 - (1+$k)*$a),
+		round($x2 + (1+$k)*$a), round($y2 - (1-$k)*$a),
+		round($x2 + (1-$k)*$a), round($y2 + (1+$k)*$a),
+	);
+	imagefilledpolygon($image, $points, 4, $color);
+	return imagepolygon($image, $points, 4, $color);
+}
+
+
 function img_code($code) {
 	global $lines, $fonts, $canvas_height, $canvas_width;
 
@@ -31,48 +153,81 @@ function img_code($code) {
 	}
 	else {
 		$scolor=array(85,85,85);
-	}	
+	}
 	
 	$im=imagecreatefrompng(dirname(__FILE__)."/captcha/back.png");
-	$color = imagecolorallocate($im, 100, 100, 100);				
+	$color = imagecolorallocate($im, 100, 100, 100);
+	//$color = imagecolorallocate($im, $scolor[0], $scolor[1], $scolor[2]);
 	mb_internal_encoding("UTF-8");
 
 	$x = 0;
 
-	for($i = 0; $i < mb_strlen($code); $i++) {
-		$font = $fonts[rand(0,sizeof($fonts)-1)];
-		$fname = img_dir.$font["fname"];
+	if (!KU_CAPTCHACOMPLEX) {
+		for($i = 0; $i < mb_strlen($code); $i++) {
+			$font = $fonts[rand(0,sizeof($fonts)-1)];
+			$fname = img_dir.$font["fname"];
 
-		$rot = from_range($font['rotation']);
-		$rr = deg2rad($rot);
-		$size = from_range($font['size']);
-		
-		$letter=mb_substr($code, $i, 1);
+			$rot = from_range($font['rotation']);
+			$rr = deg2rad($rot);
+			$size = from_range($font['size']);
+			
+			$letter=mb_substr($code, $i, 1);
 
-		$width = imagettfbbox($size, 0, $fname, $letter)[4];
-		if ($width < $size/3) $width = ceil($size/3); // For too narrow letters
-		// Radius of the bounding circle
-		$rad = sqrt($width**2 + $size**2) / 2;
-		$at = atan2($width, $size);
+			$width = imagettfbbox($size, 0, $fname, $letter)[4];
+			if ($width < $size/3) $width = ceil($size/3); // For too narrow letters
+			// Radius of the bounding circle
+			$rad = sqrt($width**2 + $size**2) / 2;
+			$at = atan2($width, $size);
 
-		$space = from_range($font["letter_spacing"], true)*$size;
+			$space = from_range($font["letter_spacing"], true)*$size;
 
-		$offset_x = round($rad * (sin($at)-sin($at-$rr))); // X offset due to rotation
-		$x += ($i==0)
-			? round($rad - $width/2)
-			: ($space + $prev_width); // Space between chars
-		$vspace = (($canvas_height-2*$rad)/2) * $font['v_scatter'];
-		$y = round($size/2 + $canvas_height/2)
-			+ rand(-$vspace, $vspace) // Random component
-			+ round($rad * (cos($at-$rr)-cos($at))); // Y offset due to ratation
-		$prev_width = $width;
-		imagettftext ($im, $size, $rot, $x + $offset_x, $y, $color, $fname, $letter);
+			$offset_x = round($rad * (sin($at)-sin($at-$rr))); // X offset due to rotation
+			$x += ($i==0)
+				? round($rad - $width/2)
+				: ($space + $prev_width); // Space between chars
+			$vspace = (($canvas_height-2*$rad)/2) * $font['v_scatter'];
+			$y = round($size/2 + $canvas_height/2)
+				+ rand(-$vspace, $vspace) // Random component
+				+ round($rad * (cos($at-$rr)-cos($at))); // Y offset due to ratation
+			$prev_width = $width;
+			imagettftext ($im, $size, $rot, $x + $offset_x, $y, $color, $fname, $letter);
+		}
+		for ($i=0; $i<$lines; $i++) {
+			imageline($im, rand(0, 30), rand(0, 70), rand(120, 150), rand(0, 70), $color);
+		}
+		$im=opsmaz($im,$scolor);
+	} else {
+		//--------------------------------------------------------------------------
+		$font = "./captcha/"+KU_CAPTCHAFONTNAME;
+		$width  = 15 * imagefontwidth(5);
+		$height = 3 * imagefontheight(5);
+
+		$im  = imagecreate($width*2, $height*2);
+		$bgColor = imagecolorallocatealpha($im, 255, 255, 255, 127);
+		$col = imagecolorallocate($im, $scolor[0], $scolor[1], $scolor[2]);
+
+		// init final image
+		$img = imagecreate($width, $height);
+		imagepalettecopy($img, $im);    
+		imagecopy($img, $im, 0,0,0,0, $width, $height);
+
+		// put text into $im
+		$fsize = $height*0.6;
+		$bb = imageftbbox($fsize, 0, $font, $code);
+		$tx = $bb[4]-$bb[0];
+		$ty = $bb[5]-$bb[1];
+		$x = floor($width - $tx/2 - $bb[0]);
+		$y = round($height - $ty/2 - $bb[1]);
+		imagettftext($im, $fsize, 0, $x, $y, -$col, $font, $code);
+		for ($i=0; $i<$lines; $i++) {
+			imagelinethick($im, rand(0, 30), rand(0, 70), rand(120, 150), rand(0, 70), $col, 5);
+		}
+
+		// warp text
+		warped_image($im, $img);
 	}
-	for ($i=0; $i<$lines; $i++) {
-		imageline($im, rand(0, 20), rand(0, 70), rand(120, 150), rand(0, 70), $color);
-	}
 
-	$im=opsmaz($im,$scolor);
+
 
 	$_SESSION['security_code'] = $code;
 
@@ -80,10 +235,17 @@ function img_code($code) {
 	header("Last-Modified: " . gmdate("D, d M Y H:i:s", 10000) . " GMT");
 	header("Cache-Control: no-store, no-cache, must-revalidate");         
 	header("Cache-Control: post-check=0, pre-check=0", false);           
-	header("Pragma: no-cache");                                           
-	header("Content-Type:image/png");		
-	ImagePNG ($im);
-	ImageDestroy ($im);
+	header("Pragma: no-cache");
+	header("Content-Type:image/png");
+	
+	if (KU_CAPTCHACOMPLEX) {
+		ImagePNG($img);
+		ImageDestroy($im);
+		ImageDestroy($img);
+	} else {
+		ImagePNG($im);
+		ImageDestroy($im);
+	}
 }
 
 function from_range($range, $float=false) {
@@ -166,6 +328,7 @@ if (isset($_GET['switch'])) {
 
 // Generate the word
 $ltrs = KU_CAPTCHALENGTH;
+
 if($captchalang == 'en') 
 	$captcha = english_word($ltrs);
 elseif($captchalang == 'ru')
@@ -175,6 +338,7 @@ else {
 		$captcha .= rand(0, 9);
 	}
 }
+//$captcha = generate_code($ltrs);
 
 session_start();
 

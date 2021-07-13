@@ -17,3 +17,18 @@ $cf['KU_MODLOGDAYS']        = 7; // Days to keep modlog entries before removing 
 $cf['KU_RSS_LIMIT']         = 300; // limits for modlogrss.xml
 
 $cf['KU_RANDOMSEED']        = 'ENTERRANDOMSHIT'; // Type a bunch of random letters/numbers here, any large amount (35+ characters) will do
+
+
+$cf['KU_CAPTCHACOMPLEX'] = 1; // If 1 then enabled complex captcha based on HKCaptcha
+$cf['KU_CAPTCHALANG'] = 'ru'; // Default captcha language to be used if no captchalang cookie is present. Supported values: ru, en, num (numeric)
+$cf['KU_CAPTCHALIFE'] = 70; // Captcha time-to-live in seconds
+$cf['KU_CAPTCHALENGTH'] = rand(4, 5); // Captcha length in letters, rand(a, b) can be used to create random length from a to b.
+$cf['KU_CAPTCHANUMLINES'] = rand(0, 1); // Number lines for captcha
+$cf['KU_CAPTCHAFONTNAME'] = "OpenSans-Light.ttf"; // Fonts places in /captcha directory
+
+$UNDERATACK = 0;
+if ($UNDERATACK) {
+	$cf['KU_CAPTCHALENGTH'] = rand(7, 10);
+	$cf['KU_CAPTCHANUMLINES'] = rand(2, 4);
+	$cf['KU_CAPTCHALIFE'] = rand(15, 20);
+}
