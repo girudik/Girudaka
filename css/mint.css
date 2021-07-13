@@ -325,7 +325,7 @@ img[src$="locked.gif"] { background-image: url('data:image/gif;base64,R0lGODlhCQ
 	font-weight: bold;
 	line-height: 15px;
 }
-.postertrip { color:#FF3300; }
+/*.postertrip { color:#FF3300; }*/
 .oldpost {
 	color:#CC1105;
 	font-weight:bold;
