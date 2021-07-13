@@ -250,7 +250,7 @@ function fetch_video_data($site, $code, $maxwidth, $thumb_tmpfile) {
 		case 302: break;
 		case 301: break;
 		case 200: break;
-		default: return array('error' => _gettext('Invalid response code ').' (JSON)'); break;
+		default: return array('error' => _gettext('Invalid response code ').' (JSON)' . var_export($ch, true)); break;
 	}
 	curl_close($ch);
 	/*if ($site == 'you') {
@@ -340,6 +340,7 @@ function fetch_video_data($site, $code, $maxwidth, $thumb_tmpfile) {
 	switch (curl_getinfo($ch, CURLINFO_HTTP_CODE)) {
 		case 404: return array('error' => _gettext('Unable to retrieve thumbnail')); break;
 		case 303: return array('error' => _gettext('Unable to retrieve thumbnail')); break;
+		//case 404: break;
 		case 302: break;
 		case 301: break;
 		case 200: break;
@@ -386,10 +387,12 @@ function fetch_video_data($site, $code, $maxwidth, $thumb_tmpfile) {
 		}
 		curl_close($ch);
 		$re = '/<meta itemprop="duration" content="PT(\d{1,6})M(\d{1,6})S">/m';
-		preg_match_all($re, $result, $matches, PREG_SET_ORDER, 0);
-		$min = $matches[0][1];
-		$sec = $matches[0][2] - 1; // fix youtube bug
-		$duration = ($min * 60) + $sec;
+		$ret = preg_match_all($re, $result, $matches, PREG_SET_ORDER, 0);
+		if ($ret) {
+			$min = $matches[0][1];
+			$sec = $matches[0][2] - 1; // fix youtube bug
+			$duration = ($min * 60) + $sec;
+		}
 		break;
 	case 'scl':
 		$r['width'] = 500;
