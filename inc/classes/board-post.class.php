@@ -687,7 +687,7 @@ class Board {
 			$posts = group_embeds($posts, true);
 			foreach ($posts as $key=>$post) {
 				foreach($post['embeds'] as $embed) {
-					if (($embed['file_type'] == 'jpg' || $embed['file_type'] == 'gif' || $embed['file_type'] == 'png') && $embed['parentid'] != 0) {
+					if (($embed['file_type'] == 'jpg' || $embed['file_type'] == 'gif' || $embed['file_type'] == 'png') && $post['parentid'] != 0) {
 						$numimages++;
 					}
 				}
