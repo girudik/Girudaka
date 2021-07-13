@@ -46,8 +46,8 @@ function RegenerateOverboard($boardlist=null, $return_page=-1, $return_output=fa
 	$over_board_class->dwoo_data->assign('for_overboard', 1);
 	$header = $over_board_class->PageHeader(0,0,-1,0, true);
 
-	$threads = $tc_db->GetAll("SELECT `latest_threads`.`id`, `visible_boards`.`boardname` FROM
-		(SELECT `id`,`boardid`,`bumped` FROM `".KU_DBPREFIX."posts` WHERE `parentid`='0' AND `IS_DELETED`!='1') `latest_threads`
+	$threads = $tc_db->GetAll("SELECT `latest_threads`.`id`, `visible_boards`.`boardname`, `latest_threads`.`IS_DELETED` FROM
+		(SELECT `id`,`boardid`,`bumped`, `IS_DELETED` FROM `".KU_DBPREFIX."posts` WHERE `parentid`='0' /*AND `IS_DELETED`!='1'*/) `latest_threads`
 		INNER JOIN(SELECT `name` AS `boardname`, `id` AS `boardid` FROM `".KU_DBPREFIX."boards` WHERE `hidden`!='1' AND `section`!='0') `visible_boards` 
 		ON `latest_threads`.`boardid` = `visible_boards`.`boardid`
 		ORDER BY `latest_threads`.`bumped` DESC
@@ -58,12 +58,19 @@ function RegenerateOverboard($boardlist=null, $return_page=-1, $return_output=fa
 	if (count($threads)) {
 		$previous_page = -1;
 		$i = 0;
+		$pages = [];
+		$deleted_threads = 0;
 		foreach($threads as &$thread) {
-			$current_page = floor($i / I0_OVERBOARD_THREADS);
+			//$current_page = floor($i / I0_OVERBOARD_THREADS);
+			$current_page = floor(($i-$deleted_threads) / I0_OVERBOARD_THREADS);
 			if ($current_page != $previous_page) {
 				$execution_times[$current_page] = microtime_float();
-				$pages[$current_page] .= $form_start;
+				//$pages[$current_page] .= $form_start;
+				$pages[$current_page] = $form_start;
 				$previous_page = $current_page;
+			}
+			if ($thread['IS_DELETED'] == 1) {
+				$deleted_threads++;
 			}
 			// For all the boards involved create a board_class instance
 			if (!isset($boards[$thread['boardname']])) { // (only if it's not already created)
@@ -76,32 +83,49 @@ function RegenerateOverboard($boardlist=null, $return_page=-1, $return_output=fa
 				// $pages[$current_page] .= "<script>over_board_info['".$thread['boardname']."'] = ".json_encode($boards[$thread['boardname']]->board, JSON_UNESCAPED_UNICODE)."</script>";
 			}
 			// Generate thread piece
-			$threadling = $boards[$thread['boardname']]->GenerateOverboardThreadFragment($thread['id']);
+			$threadling = $boards[$thread['boardname']]->GenerateOverboardThreadFragment($thread['id'], $thread['IS_DELETED']);
 			$pages[$current_page] .= $threadling;
 			$i++;
 		}
 		unset($thread);
-	}
-	else {
+	} else {
 		$pages = [$form_start];
 	}
 	
 	$totalpages = count($pages);
-	$over_board_class->dwoo_data->assign('numpages', $totalpages-1);
+	$totalpages_with_del = floor((count($threads)-$deleted_threads) / KU_THREADS);
 
-	$page = 0; foreach($pages as &$contents) {
+	//$over_board_class->dwoo_data->assign('numpages', $totalpages-1);
+	$over_board_class->dwoo_data->assign('numpages', $totalpages_with_del);
+
+	$page = 0;
+	foreach($pages as &$contents) {
 		$over_board_class->dwoo_data->assign('thispage', $page);
 		$footer = $over_board_class->Footer(false, (microtime_float()-$execution_times[$page]));
 		$contents = $header.$contents.$footer;
-		$filename = KU_BOARDSDIR.I0_OVERBOARD_DIR.'/'.($page==0 ? KU_FIRSTPAGE : '/'.$page.'.html');
-		if (!file_exists($filename)) {
-			@mkdir(pathinfo($filename, PATHINFO_DIRNAME), 0755, true);
+		if ($return_output) {
+			if ($page == $return_page) {
+				$filename = KU_BOARDSDIR.I0_OVERBOARD_DIR.'/'.($page==0 ? KU_FIRSTPAGE : '/'.$page.'.html');
+				if (!file_exists($filename)) {
+					@mkdir(pathinfo($filename, PATHINFO_DIRNAME), 0755, true);
+				}
+				print_page($filename, $contents, I0_OVERBOARD_DIR);
+				return $contents;
+			}
+		} else {
+			$filename = KU_BOARDSDIR.I0_OVERBOARD_DIR.'/'.($page==0 ? KU_FIRSTPAGE : '/'.$page.'.html');
+			if (!file_exists($filename)) {
+				@mkdir(pathinfo($filename, PATHINFO_DIRNAME), 0755, true);
+			}
+			print_page($filename, $contents, I0_OVERBOARD_DIR);
 		}
-		print_page($filename, $contents, I0_OVERBOARD_DIR);
 		$page++;
 	}
 	unset($contents);
 
+	if ($return_output) {
+		return "";
+	}
 	$over_board_class->DeleteOldPages($totalpages-1);
 }
 ?>

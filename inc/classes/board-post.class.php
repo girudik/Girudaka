@@ -253,8 +253,13 @@ class Board {
 		$pages = array();
 
 		// split threads into pages →
+		$deleted_threads = 0;
 		for ($i=0; $i < $total_threads; $i++) {
-			$current_page = floor($i / KU_THREADS);
+			//$current_page = floor($i / KU_THREADS);
+			$current_page = floor(($i-$deleted_threads) / KU_THREADS);
+			if ($threads[$i]['IS_DELETED'] == 1) {
+				$deleted_threads++;
+			}
 			if ($current_page-1 > $to) { // don't rebuild all pages
 				$threads[$i]['page'] = $current_page;
 				$pages[$current_page] []= $threads[$i];
@@ -275,12 +280,14 @@ class Board {
 				COUNT(DISTINCT `id`) `reply_count`,
 				MAX(`timestamp`) `replied`,
 				MAX(`id`) `last_reply`,
-				SUM(CASE WHEN `file_md5` != '' THEN 1 ELSE 0 END) `images`
+				SUM(CASE WHEN `file_md5` != '' THEN 1 ELSE 0 END) `images`,
+				SUM(`IS_DELETED`) `IS_DELETED`
 			FROM `".KU_DBPREFIX."postembeds`
 			WHERE `boardid` = '". $this->board['id'] ." '
 				AND `parentid` = '". $threads[$i]['id'] ."'");
 			$stats = $stats[0];
-			$threads[$i]['reply_count'] = $stats['reply_count'];
+			//$threads[$i]['reply_count'] = $stats['reply_count'];
+			$threads[$i]['reply_count'] = ($stats['reply_count'] - $stats['IS_DELETED']);
 			$threads[$i]['replied']     = $stats['replied'];
 			$threads[$i]['last_reply']  = $stats['last_reply'];
 			$threads[$i]['images']      = $stats['images'];
@@ -290,9 +297,9 @@ class Board {
 				}
 			}
 			// ← fill thread stats
-
 			$pages[$current_page] []= $threads[$i];
 		} // ← split thread into pages
+
 
 		// rebuild pages needing to be rebuilt →
 		$page = 0;
@@ -300,7 +307,10 @@ class Board {
 		if (!$totalpages) {
 			$pages []= array();
 		}
-		$this->dwoo_data->assign('numpages', $totalpages-1);
+		$totalpages_with_del = floor(($total_threads-$deleted_threads) / KU_THREADS);
+
+		//$this->dwoo_data->assign('numpages', $totalpages-1);
+		$this->dwoo_data->assign('numpages', $totalpages_with_del);
 
 		$rebuilt = 0;
 		foreach ($pages as $pagethreads) {
@@ -319,27 +329,33 @@ class Board {
 						JOIN (
 							SELECT DISTINCT `id`
 							FROM `".KU_DBPREFIX."postembeds`
-							WHERE `boardid` = '". $this->board['id'] ." '
-								AND `parentid` = ".$thread['id']." 
+							WHERE `boardid` = '". $this->board['id'] ."'
+								AND `parentid` = ".$thread['id']."
 								AND `IS_DELETED` = 0
 							ORDER BY `id` DESC
 							LIMIT ".(($thread['stickied'] == 1) ? (KU_REPLIESSTICKY) : (KU_REPLIES))."
 						) `uniq_id` 
 						ON `".KU_DBPREFIX."postembeds`.`id` = `uniq_id`.`id`
-						WHERE `boardid` = '". $this->board['id'] ." '
+						WHERE `boardid` = '". $this->board['id'] ."'
 						ORDER BY `uniq_id`.`id` desc");*/
+					$deleted = "AND `IS_DELETED` = 0";
+					if ($thread['IS_DELETED'] == 1) {
+						$deleted = "";
+					}
 					$posts = $tc_db->GetAll("SELECT * FROM `".KU_DBPREFIX."postembeds`
 						JOIN (
 							SELECT DISTINCT `id`
 							FROM `".KU_DBPREFIX."postembeds`
-							WHERE `boardid` = '". $this->board['id'] ." '
-								AND `parentid` = ".$thread['id']." 
+							WHERE `boardid` = '". $this->board['id'] ."'
+								AND `parentid` = ".$thread['id']."
+								" . $deleted . "
 							ORDER BY `id` DESC
 							LIMIT ".(($thread['stickied'] == 1) ? (KU_REPLIESSTICKY) : (KU_REPLIES))."
 						) `uniq_id` 
 						ON `".KU_DBPREFIX."postembeds`.`id` = `uniq_id`.`id`
-						WHERE `boardid` = '". $this->board['id'] ." '
+						WHERE `boardid` = '". $this->board['id'] ."'
 						ORDER BY `uniq_id`.`id` desc");
+			
 
 					$posts = group_embeds($posts, true);
 
@@ -363,6 +379,7 @@ class Board {
 							$images_shown++;
 						}
 					}
+					
 					$omitted_images = $thread['images'] - $images_shown;
 					if ($omitted_images < 0) $omitted_images = 0;
 					// ← Calculate omitted posts and images
@@ -388,6 +405,7 @@ class Board {
 					$postbox = $this->Postbox();
 					$postbox = str_replace("<!sm_threadid>", 0, $postbox);
 				}
+				
 				$this->dwoo_data->assign('posts', $newposts);
 				$this->dwoo_data->assign('file_path', getCLBoardPath($this->board['name'], $this->board['loadbalanceurl_formatted'], ''));
 
@@ -444,6 +462,9 @@ class Board {
 				// Calculate the number of rows we will actually output
 				$maxrows = max(1, (($total_threads - ($total_threads % 12)) / 12));
 				foreach ($threads as $thread) {
+					if ($thread["IS_DELETED"]) {
+						continue;
+					}
 					// populate JSON object along the way →
 					unset($thread_json);
 					foreach ($json_fields as $field) {
@@ -563,7 +584,7 @@ class Board {
 	/**
 	 * Generate HTML for a thread on overboard
 	 */
-	function GenerateOverboardThreadFragment($op_id) {
+	function GenerateOverboardThreadFragment($op_id, $is_deleted=0) {
 		global $tc_db;
 		$tc_db->SetFetchMode(ADODB_FETCH_ASSOC);
 
@@ -572,15 +593,20 @@ class Board {
 		// fill thread stats →
 		$stats = $tc_db->GetAll("SELECT
 			COUNT(DISTINCT `id`) `reply_count`,
-			SUM(CASE WHEN `file_md5` != '' THEN 1 ELSE 0 END) `images`
+			SUM(CASE WHEN `file_md5` != '' THEN 1 ELSE 0 END) `images`,
+			SUM(`IS_DELETED`) `deleted_posts`
 		FROM `".KU_DBPREFIX."postembeds`
 		WHERE `boardid` = '". $this->board['id'] ." '
-			AND `IS_DELETED` = 0
+			/*AND `IS_DELETED` = 0*/
 			AND `parentid` = '". $op_id ."'");
 		$stats = $stats[0];
 		// ← fill thread stats
 
 		// Get OP + last posts to render →
+		$deleted = "AND `IS_DELETED` = 0";
+		if ($is_deleted) {
+			$deleted = "";
+		}
 		$posts = $tc_db->GetAll(
 			"SELECT * FROM `".KU_DBPREFIX."postembeds`
 			JOIN (
@@ -591,7 +617,7 @@ class Board {
 				WHERE 
 					`boardid` = '". $this->board['id'] ."' 
 					AND (`id`='". $op_id ."' OR `parentid` = '". $op_id ."')
-					AND `IS_DELETED` = 0
+					". $deleted ."
 				ORDER BY `is_op` DESC, `id` DESC
 				LIMIT ".(KU_REPLIES+1)."
 			) `uniq_id` 
@@ -601,7 +627,7 @@ class Board {
 		$posts = group_embeds($posts, true);
 		// ← Get OP + last posts to render
 
-		$posts[0]['reply_count'] = $stats['reply_count'];
+		$posts[0]['reply_count'] = $stats['reply_count'] - $stats['deleted_posts'];
 		$posts[0]['images']      = $stats['images'];
 
 		// Calculate omitted posts and images →
@@ -646,7 +672,7 @@ class Board {
 	/**
 	 * Regenerate each thread's corresponding html file, starting with the most recently bumped
 	 */
-	function RegenerateThreads($id = 0) {
+	function RegenerateThreads($id = 0, $return_output = false) {
 		global $tc_db, $CURRENTLOCALE;
 		require_once(KU_ROOTDIR."lib/dwoo.php");
 		if (!isset($this->dwoo)) { $this->dwoo = New Dwoo(); $this->dwoo_data = new Dwoo_Data(); $this->InitializeDwoo(); }
@@ -669,13 +695,16 @@ class Board {
 					$this->BuildThread($thread['id'], $header, $postbox);
 				}
 			}
-		}
-		else {
-			$this->BuildThread($id);
+		} else {
+			if ($return_output) {
+				return $this->BuildThread($id, $header=null, $postbox=null, $return_output=true);
+			} else {
+				$this->BuildThread($id);
+			}
 		}
 	}
 
-	function BuildThread($id, $header=null, $postbox=null) {
+	function BuildThread($id, $header=null, $postbox=null, $return_output=false) {
 		global $tc_db, $CURRENTLOCALE;
 
 		$numimages = 0;
