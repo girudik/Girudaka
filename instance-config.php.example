@@ -33,3 +33,5 @@ if ($UNDERATACK) {
 	$cf['KU_CAPTCHANUMLINES'] = rand(2, 4);
 	$cf['KU_CAPTCHALIFE'] = rand(15, 20);
 }
+
+$cf['KU_SAGE_OFF'] = false; // disable sage logic

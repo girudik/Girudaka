@@ -468,20 +468,32 @@ if (isset($_POST['makepost'])) { // A more evident way to identify post action, 
 
 		$page_from = -1; $page_to = INF;
 
-		if ($thread_replyto != '0') { // If it's a reply...
-			$page_to = $board_class->GetPageNumber($thread_replyto)['page'];
-			if (
-				strtolower($_POST['em']) == 'sage' // normal sage 
-				||
-				unistr_to_ords($_POST['em']) == array(19979, 12370) // japs' sage, if it even works
-				||
-				$thread_replies > $board_class->board['maxreplies'] // the number of replies already in the thread are less than the maximum thread replies before perma-sage
-			) { //...in case of sage, only one page needs to be regenerated
-				$page_from = $page_to;
+		if (!KU_SAGE_OFF) {
+			if ($thread_replyto != '0') { // If it's a reply...
+				$page_to = $board_class->GetPageNumber($thread_replyto)['page'];
+				if (
+					strtolower($_POST['em']) == 'sage' || // normal sage
+					unistr_to_ords($_POST['em']) == array(19979, 12370) || // japs' sage, if it even works
+					$thread_replies > $board_class->board['maxreplies'] // the number of replies already in the thread are less than the maximum thread replies before perma-sage
+				) { //...in case of sage, only one page needs to be regenerated
+					$page_from = $page_to;
+				}
+				else { //...bump the threda
+					$tc_db->Execute("UPDATE `" . KU_DBPREFIX . "posts` SET `bumped` = '" . time() . "' WHERE `boardid` = " . $board_class->board['id'] . " AND `id` = '" . $thread_replyto . "'");
+				}
 			}
-			else { //...bump the threda
-				$tc_db->Execute("UPDATE `" . KU_DBPREFIX . "posts` SET `bumped` = '" . time() . "' WHERE `boardid` = " . $board_class->board['id'] . " AND `id` = '" . $thread_replyto . "'");
+		} else { // disable sage logic, force bump
+			if ($thread_replyto != '0') { // If it's a reply...
+				$page_to = $board_class->GetPageNumber($thread_replyto)['page'];
+				if (
+					strtolower($_POST['em']) == 'sage' || // normal sage 
+					unistr_to_ords($_POST['em']) == array(19979, 12370) || // japs' sage, if it even works
+					$thread_replies > $board_class->board['maxreplies'] // the number of replies already in the thread are less than the maximum thread replies before perma-sage
+				) { //...in case of sage, only one page needs to be regenerated
+					$page_from = $page_to;
+				}
 			}
+			$tc_db->Execute("UPDATE `" . KU_DBPREFIX . "posts` SET `bumped` = '" . time() . "' WHERE `boardid` = " . $board_class->board['id'] . " AND `id` = '" . $thread_replyto . "'");
 		}
 
 		$tc_db->Execute("COMMIT");
@@ -493,6 +505,7 @@ if (isset($_POST['makepost'])) { // A more evident way to identify post action, 
 			// Regenerate board pages
 			$board_class->RegeneratePages($page_from, $page_to);
 		}
+
 		// Regeneate JSON
 		$cl20 = new Cloud20();
 		$cl20->rebuild();
@@ -717,7 +730,6 @@ if (isset($_POST['makepost'])) { // A more evident way to identify post action, 
 					$isownpost = !$ismod && !$isop;
 					$delres = $post_class->Delete(false, $isownpost && I0_ERASE_DELETED, $ismod);
 					if ($delres) {
-
 						if ($delres !== 'already_deleted') { // Skip the unneeded rebuild if the post is already deleted
 							if (! isset($notifications_del[$room_id]))
 								$notifications_del[$room_id] = array();

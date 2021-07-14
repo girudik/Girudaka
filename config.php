@@ -95,6 +95,7 @@ if (!$cache_loaded) {
 
 		$cf['I0_DEFERRED_RENDER_PAGE'] = 0; // If nonzero, pages starting from this will be rendered upon request. Default is 0 which disables just-in-time rendering.
 		$cf['KU_NEWCACHE_LOGIC'] = false; // perfomance busting, need nginx logic for working
+		$cf['KU_SAGE_OFF'] = false; // disable sage logic
 
 		$cf['I0_DETECT_SOSACH'] = false; // Detect pictures from particular website
 
