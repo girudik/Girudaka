@@ -493,6 +493,9 @@ msgstr "Спрятать окошко просматриваемых тредо�
 msgid "Home"
 msgstr "Главная"
 
+msgid "home"
+msgstr "главная"
+
 msgid "ID"
 msgstr "ID"
 
@@ -1007,7 +1010,7 @@ msgid "Reporting allows users to report posts, adding the post to the report lis
 msgstr "Ответ разрешен тем, кто добавлен в лист отвечающих."
 
 msgid "Reports"
-msgstr "Ответы"
+msgstr "Жалобы"
 
 msgid "Restore watched threads"
 msgstr "Восстановить просматриваемые треды"
@@ -1763,7 +1766,10 @@ msgid "Styles"
 msgstr "Стили"
 
 msgid "Options"
-msgstr "Опции"
+msgstr "Настройки"
+
+msgid "options"
+msgstr "настройки"
 
 msgid "not bump this thread"
 msgstr "продемонстрировать своё недовольство"

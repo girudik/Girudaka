@@ -120,12 +120,12 @@
 	</script>
 	<div id="overlay_menu" class="content-background overlay-menu yesscript">
 		<span style="display: none" class="olm-link mgoback">[<a href="{%KU_CGIPATH}/{$board.name}/"> &lt; </a>]</span>
-		<span class="olm-link">[<a href="{%KU_BOARDSFOLDER}">home</a>]</span>
+		<span class="olm-link">[<a href="{%KU_BOARDSFOLDER}">{t}home{/t}</a>]</span>
 		{if %I0_OVERBOARD_ENABLED}<span class="olm-link">[<a title="{%I0_OVERBOARD_DESCRIPTION}" href="{%KU_BOARDSFOLDER}{%I0_OVERBOARD_DIR}/">{%I0_OVERBOARD_DIR}</a>]</span>{/if}
 		{foreach name=sections item=sect from=$boardlist}
 		<b  class="olm-link">[<a href="{if $sect.abbreviation eq '20'}{%KU_BOARDSPATH}/?p=2.0{else}#{/if}" class="sect-exr" data-toexpand="{$sect.abbreviation}">{$sect.nick}</a>]</b>
 		{/foreach}
-		<span class="olm-link">[<a href="#" class="sect-exr" data-toexpand="_options">options</a>]</span>
+		<span class="olm-link">[<a href="#" class="sect-exr" data-toexpand="_options">{t}options{/t}</a>]</span>
 		{foreach name=sections item=sect from=$boardlist}
 		<div class="menu-sect" id="ms-{$sect.abbreviation}">
 			{if $sect.abbreviation neq '20'}
