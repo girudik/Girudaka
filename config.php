@@ -180,6 +180,7 @@ if (!$cache_loaded) {
 		$cf['KU_ANIMATEDTHUMBS']   = false; // Whether or not to allow animated thumbnails (only applies if using ffmpeg or imagemagick)
 		$cf['KU_USEOPTIPNG']       = false; // Whether or not to use optipng for PNG thumbnails optimization. Suitable only when useing imagemagick or ffmpeg
 		$cf['KU_OPTIPNGLV']        = '2'; // Optipng optimization level, from 1 (fastest) to 7 (slowest)
+		$cf['KU_USEPNGQUANT'] = false; // Whether or not to use pngquant for PNG thumbnails optimization, recommended
 
 		// Post handling
 		$cf['KU_NEWWINDOW']       = true; // When a user clicks a thumbnail, whether to open the link in a new window or not
