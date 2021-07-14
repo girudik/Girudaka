@@ -483,6 +483,9 @@ msgstr "cпрятать"
 msgid "Hide Thread"
 msgstr "Спрятать тред"
 
+msgid "Hide Post"
+msgstr "Спрятать пост"
+
 msgid "Hide the watched threads box"
 msgstr "Спрятать окошко просматриваемых тредов"
 
@@ -1752,6 +1755,9 @@ msgstr "Закладки"
 
 msgid "Un-Hide Thread"
 msgstr "Раскрыть тред"
+
+msgid "Un-Hide Post"
+msgstr "Раскрыть пост" 
 
 msgid "Styles"
 msgstr "Стили"

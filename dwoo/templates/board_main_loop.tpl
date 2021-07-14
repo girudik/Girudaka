@@ -93,11 +93,26 @@
      <svg class="icon i-icon i-pin"><use xlink:href="#i-pin"></use></svg>
     {/if}
     <span id="hide{$post.id}" class="inthread-hide">
-     <a href="#" onclick="javascript:HiddenItems.hideThread('{$post.id}-{$board.name}');return false;" title="Hide Thread">
+     <a href="#" onclick="javascript:HiddenItems.hideThread('{$post.id}-{$board.name}');return false;" title="{t}Hide Thread{/t}">
       <svg class="icon b-icon"><use xlink:href="#i-hide"></use></svg>
      </a>
     </span>
    {/if} {* ← /Extra-buttons related to OP only *}
+   {if $post.parentid > 0}
+    <span id="hidepost{$post.id}-{$board.name}">
+        <a href="#" onclick="javascript:HiddenItems.hidePost('{$post.id}-{$board.name}');return false;" title="{t}Hide Post{/t}">
+            <svg class="icon b-icon"><use xlink:href="#i-hide"></use></svg>
+        </a>
+    </span>
+    <span id="unhidepost{$post.id}-{$board.name}">
+     {t}Post{/t} 
+     <a href="{%KU_BOARDSFOLDER}{$board.name}/res/{$post.id}.html" class="ref|{$board.name}|{$post.id}|{$post.id}">{if $for_overboard}/{$board.name}/{/if}{$post.id}</a> 
+     {t}hidden.{/t}
+     <a href="#" onclick="javascript:HiddenItems.unhidePost('{$post.id}-{$board.name}');return false;" title="{t}Un-Hide Post{/t}">
+      <svg class="icon b-icon"><use xlink:href="#i-unhide"></use></svg>
+     </a>
+    </span>
+   {/if}
    <a href="#" 
    data-parent="{if $post.parentid eq 0}{$post.id}{else}{$post.parentid}{/if}-{$board.name}" 
     data-postnum="{$post.id}"
