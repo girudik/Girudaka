@@ -54,9 +54,16 @@ function createThumbnail($name, $filename, $new_w, $new_h) {
 
 		if (KU_USEOPTIPNG) {
 			if (substr(strrchr($filename,'.'),1) == 'png') {
-			$opti =	 'optipng -o' . escapeshellarg(KU_OPTIPNGLV);
-			$opti .= ' ' . escapeshellarg($filename);
-			exec($opti);
+				$opti =	 'optipng -o' . escapeshellarg(KU_OPTIPNGLV);
+				$opti .= ' ' . escapeshellarg($filename);
+				exec($opti);
+			}
+		}
+		if (KU_USEPNGQUANT) {
+			if (substr(strrchr($filename,'.'),1) == 'png') {
+				$opti =	 'pngquant -f --ext .png --skip-if-larger';
+				$opti .= ' ' . escapeshellarg($filename);
+				exec($opti);
 			}
 		}
 
