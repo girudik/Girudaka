@@ -135,7 +135,9 @@ function iter_obj(object, callback) {
 		<li>{t}No visible boards{/t}</li>
 	</ul>
 {else}
-
+	{if %I0_OVERBOARD_ENABLED}
+		<h2><a href="{%KU_BOARDSPATH}/{%I0_OVERBOARD_DIR}/" class="boardlink">{%I0_OVERBOARD_DESCRIPTION}</a></h2>
+	{/if}
 	{foreach name=sections item=sect from=$boards}
 	
 		{if %KU_MENUTYPE eq 'normal'}
