@@ -470,6 +470,9 @@ class Board {
 					if ($thread["IS_DELETED"]) {
 						continue;
 					}
+					if (!isset($thread['images'])) { // don't be null in json
+						$thread['images'] = 0;
+					}
 					// populate JSON object along the way →
 					unset($thread_json);
 					foreach ($json_fields as $field) {
