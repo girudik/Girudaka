@@ -198,7 +198,7 @@ function img_code($code) {
 		$im=opsmaz($im,$scolor);
 	} else {
 		//--------------------------------------------------------------------------
-		$font = "./captcha/"+KU_CAPTCHAFONTNAME;
+		$font = img_dir.KU_CAPTCHAFONTNAME;
 		$width  = 15 * imagefontwidth(5);
 		$height = 3 * imagefontheight(5);
 
