@@ -204,7 +204,8 @@ class Board {
 			 `parentid`=0
 			ORDER BY `bumped` DESC");*/
 		$threads = $tc_db->GetAll("SELECT 
-			(`id`='".$threadid."') AS `the_one`
+			(`id`='".$threadid."') AS `the_one`,
+			`IS_DELETED`
 			FROM `".KU_DBPREFIX."posts` 
 			WHERE
 			 `boardid`='".$this->board['id']."'
@@ -214,10 +215,15 @@ class Board {
 		$i = 0; 
 		$found = false;
 		$count = count($threads);
+		$deleted_threads = 0;
 		for ($i=0; $i < $count; $i++) { 
 			if ($threads[$i]['the_one']==1) {
-				$found = floor($i / KU_THREADS);
+				//$found = floor($i / KU_THREADS);
+				$found = floor(($i-$deleted_threads) / KU_THREADS);
 				break;
+			}
+			if ($threads[$i]['IS_DELETED'] == 1) {
+				$deleted_threads++;
 			}
 		}
 		return array(
