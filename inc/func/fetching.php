@@ -185,9 +185,12 @@ function GetFileAndThumbs($file) {
     if ($file['file_type'] == 'webm' || $file['file_type'] == 'mp4') {
       $res []= '/thumb/'.$file['file'].'s.jpg';
       $res []= '/thumb/'.$file['file'].'c.jpg';
+    } else
+    if ($file['file_type'] == 'you' || $file['file_type'] == 'scl' || $file['file_type'] == 'vim' || $file['file_type'] == 'cob') {
+      $res []= '/thumb/' . $file['file_type'] . '-'.$file['file'].'-s.jpg';
+      $res []= '/thumb/' . $file['file_type'] . '-'.$file['file'].'-c.jpg';
     }
-  }
-  else { //if embed
+  } else { //if embed
     $res []= '/thumb/'.$file['file_type'].'-'.$file['file'].'-'.'s.jpg';
     $res []= '/thumb/'.$file['file_type'].'-'.$file['file'].'-'.'c.jpg';
   }

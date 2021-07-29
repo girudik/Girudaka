@@ -123,29 +123,30 @@ class Upload {
 		  if (is_array($_POST['embed']) || is_object($_POST['embed'])) {
 				foreach($_POST['embed'] as $i => $url) {
 					list($site, $code, $time) = $this->ParseEmbed($url);
-			  	if ($code != '') {
-			  		if (array_key_exists($site, $board_class->board['embeds_allowed_assoc'])) {
-			  			$hash = md5($site.'/'.$code);
-			  			if (in_array($hash, $embed_hashes)) {
-			  				$this->exitWithUploadErrorPage(_gettext('Duplicate embed entry detected.'),
-			  					$atype, $i, $site . '/' . $code);
-			  			}
-			  			else {
-			  				$embed_hashes []= $hash;
-			  			}
-			  			$attachments []= array(
-			  				'attachmenttype' => 'embed',
-			  				'spoiler' => $_POST['embed-spoiler-'.$i] || '0',
-			  				'embedtype' => $site,
-			  				'embedtime' => $time,
-			  				'embed' => $code,
-			  				'filetype_withoutdot' => $site,
-			  				'file_md5' => $hash,
-			  				'start' => $time
-			  			);
-			  		}
-			  		else $this->exitWithUploadErrorPage(_gettext('Sorry, that filetype is not allowed on this board.'),
-			  					$atype, $i, $site . '/' . $code);
+					if ($code != '') {
+						if (array_key_exists($site, $board_class->board['embeds_allowed_assoc'])) {
+							$hash = md5($site.'/'.$code);
+							if (in_array($hash, $embed_hashes)) {
+								$this->exitWithUploadErrorPage(_gettext('Duplicate embed entry detected.'),
+									$atype, $i, $site . '/' . $code);
+							}
+							else {
+								$embed_hashes []= $hash;
+							}
+							$attachments []= array(
+								'attachmenttype' => 'embed',
+								'spoiler' => $_POST['embed-spoiler-'.$i] || '0',
+								'embedtype' => $site,
+								'embedtime' => $time,
+								'embed' => $code,
+								'filetype_withoutdot' => $site,
+								'file_md5' => $hash,
+								'start' => $time
+							);
+						} else {
+							$this->exitWithUploadErrorPage(_gettext('Sorry, that filetype is not allowed on this board.'),
+									$atype, $i, $site . '/' . $code);
+						}
 					}
 				}
 			}
@@ -164,10 +165,10 @@ class Upload {
 
 	function ParseEmbed($url) {
 		$sites = array(
-			'you' => "/(?P<short_code>[a-z-A-Z0-9_-]{11})|(?:youtu(?:\.be|be\.com)\/(?:.*v(?:\/|=)|(?:.*\/)?)(?P<code>[\w'-]+))(?:[?#&]t=(?:(?P<h>[0-9]{1,2})h)?(?:(?P<m>[0-9]{1,2})m)?(?:(?P<s>[0-9]{1,2})s)?)?/i",
 			'vim' => "/[\w\W]*vimeo\.com\/(?:.*?)(?P<code>[0-9]+)(?:#t=(?:(?P<h>[0-9]{1,2})h)?(?:(?P<m>[0-9]{1,2})m)?(?:(?P<s>[0-9]{1,2})s)?)?/i",
 			'cob' => "/[\w\W]*coub\.com\/view\/(?P<code>[\w\W]*)[\w\W]*/i",
 			'scl' => "/[\w\W]*soundcloud.com\/(?P<code>[\w\W]*)[\w\W]*/i",
+			'you' => "/(?:youtu(?:\.be|be\.com)\/(?:.*v(?:\/|=)|(?:.*\/)?)(?P<code>[\w'-]+))(?:[?#&]t=(?:(?P<h>[0-9]{1,2})h)?(?:(?P<m>[0-9]{1,2})m)?(?:(?P<s>[0-9]{1,2})s)?)?|(?P<short_code>[a-z-A-Z0-9_-]{11})/i",
 		);
 		foreach ($sites as $s => $rx) {
 			preg_match($rx, $url, $matches);

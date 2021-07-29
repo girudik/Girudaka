@@ -333,13 +333,17 @@ if (isset($_POST['makepost'])) { // A more evident way to identify post action, 
 					(
 						!$attachment['file_is_special']
 						&&
+						!$attachment['is_duplicate']
+						&&
 						!(
 							file_exists(KU_BOARDSDIR . $board_class->board['name'] . '/thumb/' . $attachment['file_name'] . 's' . $thumbfiletype)
 							&&
 							file_exists(KU_BOARDSDIR . $board_class->board['name'] . '/thumb/' . $attachment['file_name'] . 'c' . $thumbfiletype)
 						)
 					)
-				) exitWithErrorPage(_gettext('Could not copy uploaded image.'));
+				) {
+					exitWithErrorPage(_gettext('Could not copy uploaded image.'));
+				}
 			}
 		}
 
