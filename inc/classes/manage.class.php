@@ -1949,6 +1949,7 @@ class Manage {
 			$board_from = $_GET['board_from'];
 			$board_to = $_GET['board_to'];
 			$thread_from = $_GET['id'];
+			$thread_from = str_replace(" ", "", $thread_from);
 			$threads_from = explode(",", $thread_from);
 			// if last item empty ("id,")
 			if ($threads_from[count($threads_from)-1] == "") {
