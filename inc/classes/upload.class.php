@@ -221,6 +221,7 @@ class Upload {
 				? $attachment['file_original'].$attachment['file_type']
 				: $attachment['embedtype'] . '/' . $attachment['embed'];
 			// Check if attachment already posted somewhere else
+			// TODO: добавить поддержку embed не файлового типа (наблюдаются проблемы с хэшем)
 			$existing = checkMd5($attachment['file_md5'], $board_class->board['name'], $board_class->board['id']);
 			if ($existing) {
 				if ($board_class->board['duplication']) { // If file duplication is allowed on this board just copy all the properties from the prototype
@@ -526,7 +527,8 @@ class Upload {
 						FROM `" . KU_DBPREFIX . "postembeds`
 						WHERE `boardid` = " . $board_class->board['id'] . "
 						AND `file` = " . $tc_db->qstr($video_id));
-					if ($results == 0) {
+					// TODO: убрать $board_class->board['duplication'] после TODO см. выше
+					if ($results == 0 || $board_class->board['duplication']) {
 						/*$thumbw = $this->isreply ? KU_REPLYTHUMBWIDTH : KU_THUMBWIDTH;
 						$thumbh = $this->isreply ? KU_REPLYTHUMBHEIGHT : KU_THUMBHEIGHT;*/
 						$thumb_tmpfile = tmpfile();
@@ -570,8 +572,7 @@ class Upload {
 						$attachment['imgHeight'] = $video_data['height'];
 						$attachment['file_original'] = $video_data['title'];
 						$attachment['file_size_formatted'] = $video_data['duration'];
-					}
-					else {
+					} else {
 						/*$results = $tc_db->GetAll("SELECT `id`,`parentid`
 							FROM `" . KU_DBPREFIX . "postembeds`
 							WHERE `boardid` = " . $board_class->board['id'] . "
@@ -584,9 +585,12 @@ class Upload {
 							AND `file` = " . $tc_db->qstr($video_id) . "
 							LIMIT 1");
 						foreach ($results as $line) {
-							$real_threadid = ($line[1] == 0) ? $line[0] : $line[1];
-							$this->exitWithUploadErrorPage(sprintf(_gettext('That video ID has already been posted %shere%s.', $atype, $i, $filename),
-								'<a href="' . KU_BOARDSFOLDER . '/' . $board_class->board['name'] . '/res/' . $real_threadid . '.html#' . $line[1] . '">','</a>'));
+							$this->exitWithUploadErrorPage(
+								sprintf(
+									_gettext('That video ID has already been posted %shere%s.'), '<a href="' . KU_BOARDSPATH . '/' . $board_class->board['name'] . '/res/' . $line["parentid"] . '.html#' . $line["id"] . '">','</a>'
+								),
+								$atype, $i, $filename
+							);
 						}
 					}
 				}
