@@ -1981,11 +1981,13 @@ class Manage {
 
 				$posts = group_embeds($postembeds);
 				$id_map = array();
+				$threads_to = array();
 				foreach($posts as $post) {
 					$id = $post['id'];
 					$new_id = $tc_db->GetOne("SELECT COALESCE(MAX(id),0) + 1 FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = '$board_to_id'");
 					if ($id == $thread_from) {
 						$thread_to = $new_id;
+						array_push($threads_to, $thread_to); // for logging
 					}
 					$tc_db->Execute("UPDATE `" . KU_DBPREFIX . "posts`
 					SET
@@ -2065,6 +2067,10 @@ class Manage {
 			}
 
 			$msg = _gettext('Move complete.');
+			// logging
+			for($i = 0; $i < count($thread_from); $i++) {
+				management_addlogentry(_gettext('Moved thread') . ' '._gettext('From').' /'.$board_from.'/res/'. $threads_from[$i] . '.html '._gettext('To').' /' . $board_to . '/res/'. $threads_to[$i] . '.html', 5);
+			}
 
 			if ($_POST['AJAX'])
 				exitWithSuccessJSON($msg);
