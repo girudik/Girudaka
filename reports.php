@@ -11,7 +11,7 @@ function reports() {
 	//$this->ModeratorsOnly();
 
 	$tpl_page .= '<h2>'. _gettext('Reports') . '</h2><br />';
-	$query = "SELECT * FROM `" . KU_DBPREFIX . "reports` WHERE `cleared` = 0";
+	$query = "SELECT * FROM `" . KU_DBPREFIX . "reports` WHERE `cleared` = 0 ORDER BY id DESC";
 	$resultsreport = $tc_db->GetAll($query);
 	if (count($resultsreport) > 0) {
 		//$tpl_page .= '<table border="1" width="100%"><tr><th>Board</th><th>Post</th><th>File</th><th>Message</th><th>Reason</th><th>Reporter IP</th><th>Action</th></tr>';
