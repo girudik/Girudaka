@@ -803,6 +803,10 @@ if (isset($_POST['makepost'])) { // A more evident way to identify post action, 
 									.($ismod ? ' '._gettext('(By mod)') : '')
 									.($isop ? ' '._gettext('(By OP)') : '')
 									.' '.($delres-1)._gettext('replies deleted').'.');
+								if (KU_NEWCACHE_LOGIC) {
+									$dir = KU_BOARDSDIR.$board_class->board['name'];
+									@unlink($dir . "/res/".$thread_id.".html");
+								}
 							}
 							if (I0_FULL_ANONYMITY_MODE && $isownpost) {
 								$latest_thread = $post_class->post['parentid'] == '0' ? ", `latest_thread`=1" : "";
