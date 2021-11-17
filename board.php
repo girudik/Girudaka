@@ -174,6 +174,7 @@ if (isset($board_class)) {
 $posting_class->UTF8Strings();
 
 if (isset($_POST['makepost'])) { // A more evident way to identify post action, as actual validity will be checked later anyway
+	//prof_flag("1");
 	if (!isset($board_class))
 		error_redirect($is_overboard ? KU_BOARDSPATH . '/' . I0_OVERBOARD_DIR . '/' : KU_WEBPATH, _gettext('No board provided'));
 	$tc_db->Execute("START TRANSACTION");
@@ -181,6 +182,7 @@ if (isset($_POST['makepost'])) { // A more evident way to identify post action, 
 	$post_isreply = $posting_class->CheckIsReply();
 	if(! $post_isreply) $posting_class->CheckNewThreadTime();
 
+	//prof_flag("2");
 	require_once KU_ROOTDIR . 'inc/classes/upload.class.php';
 	$upload_class = new Upload($post_isreply);
 	$upload_class->UnifyAttachments();
@@ -201,6 +203,7 @@ if (isset($_POST['makepost'])) { // A more evident way to identify post action, 
 	$post_autosticky = false;
 	$post_autolock = false;
 	$post_displaystaffstatus = false;
+	//prof_flag("3");
 
 	$results = $tc_db->GetAll("SELECT id
 		FROM `" . KU_DBPREFIX . "posts`
@@ -255,18 +258,20 @@ if (isset($_POST['makepost'])) { // A more evident way to identify post action, 
 			$post_name = md5_decrypt($_POST['modpassword'], KU_RANDOMSEED);
 		}
 	}
+	//prof_flag("4");
 
 	$posting_class->postParseCheckText($post_message, $board_class->board['name'], $board_class->board['id']);
 
 	$posting_class->CheckBadUnicode($post_name, $post_email, $post_subject, $post_message);
 
+	//prof_flag("5");
 	if ($board_class->board['locked'] == 0 || ($user_authority > 0 && $user_authority != 3)) {
 		if ($post_isreply) {
 			$upload_class->isreply = true;
 		}
 
 		$upload_class->HandleUpload();
-
+		//prof_flag("5.1");
 		if ($board_class->board['forcedanon'] == '1') {
 			if ($user_authority == 0 || $user_authority == 3) {
 				$post_name = '';
@@ -318,6 +323,7 @@ if (isset($_POST['makepost'])) { // A more evident way to identify post action, 
 		} else {
 			$user_authority_display = 0;
 		}
+		//prof_flag("5.2");
 
 		$emoji_candidates = array();
 
@@ -346,7 +352,7 @@ if (isset($_POST['makepost'])) { // A more evident way to identify post action, 
 				}
 			}
 		}
-
+		//prof_flag("5.3");
 		$post = array();
 		if (KU_GEOIPMODE == 'flare') {
 			$post['country'] = isset($_SERVER["HTTP_CF_IPCOUNTRY"]) ? strtolower($_SERVER["HTTP_CF_IPCOUNTRY"]) : 'xx';
@@ -378,6 +384,7 @@ if (isset($_POST['makepost'])) { // A more evident way to identify post action, 
 
 		$post = hook_process('posting', $post);
 
+
 		// I never knew this weird shit exists in Kusaba
 		if ($thread_replyto != '0') {
 			if ($post['message'] == '' && KU_NOMESSAGEREPLY != '') {
@@ -389,6 +396,7 @@ if (isset($_POST['makepost'])) { // A more evident way to identify post action, 
 			}
 		}
 
+		//prof_flag("5.4");
 		// Emoji registration
 		if (I0_USERSMILES_ENABLED && $emoji_candidates) {
 			$any_new = false;
@@ -422,12 +430,13 @@ if (isset($_POST['makepost'])) { // A more evident way to identify post action, 
 				$post['message'] = $parse_class->Smileys($post['message']);
 		}
 		// ← Emoji registration
-
+		//prof_flag("5.5");
 		// $upload_class->file_name, $upload_class->original_file_name, $filetype_withoutdot, $upload_class->file_md5, $upload_class->imgWidth, $upload_class->imgHeight, $upload_class->file_size, $upload_class->imgWidth_thumb, $upload_class->imgHeight_thumb
 		$post_time = time();
 		$post_class = new Post(0, $board_class->board['name'], $board_class->board['id'], true);
 		$post_id = $post_class->Insert($thread_replyto, $post['name'], $post['tripcode'], $post['email'], $post['subject'], addslashes($post['message']), $upload_class->attachments, $post_passwordmd5, $post_time, $post_time, $posting_class->user_id, $user_authority_display, $sticky, $lock, $board_class->board['id'], $post['country'], $posting_class->is_new_user, $post_del_timestamp);
 
+		//prof_flag("6");
 		// Update user activity stats in full anonymity mode
 		if (I0_FULL_ANONYMITY_MODE) {
 			$fields = "`idmd5`, `latest_post`, `post_count`".($post_isreply ? "" : ", `latest_thread`");
@@ -455,7 +464,7 @@ if (isset($_POST['makepost'])) { // A more evident way to identify post action, 
 			$modpost_message .= '.html#' . $post_id . '">' . $post_id . '</a> in /'.$_POST['board'].'/ with flags: ' . $flags . '.';
 			management_addlogentry($modpost_message, 1, md5_decrypt($_POST['modpassword'], KU_RANDOMSEED));
 		}
-
+		//prof_flag("7");
 		// Give persistent cookie
 		if ($posting_class->ipless_mode && $posting_class->need_cookie)
 			setcookie('I0_persistent_id', $posting_class->user_id, time() + 31556926, '/'/*, KU_DOMAIN*/);
@@ -471,7 +480,7 @@ if (isset($_POST['makepost'])) { // A more evident way to identify post action, 
 		setcookie('postpassword', $_POST['postpassword'], time() + 31556926, '/');
 
 		$page_from = -1; $page_to = INF;
-
+		//prof_flag("8");
 		if (!KU_SAGE_OFF) {
 			if ($thread_replyto != '0') { // If it's a reply...
 				$page_to = $board_class->GetPageNumber($thread_replyto)['page'];
@@ -497,23 +506,26 @@ if (isset($_POST['makepost'])) { // A more evident way to identify post action, 
 					$page_from = $page_to;
 				}
 			}
-			$tc_db->Execute("UPDATE `" . KU_DBPREFIX . "posts` SET `bumped` = '" . time() . "' WHERE `boardid` = " . $board_class->board['id'] . " AND `id` = '" . $thread_replyto . "'");
+			//$tc_db->Execute("UPDATE `" . KU_DBPREFIX . "posts` SET `bumped` = '" . time() . "' WHERE `boardid` = " . $board_class->board['id'] . " AND `id` = '" . $thread_replyto . "'");
+			$tc_db->Execute("UPDATE `" . KU_DBPREFIX . "posts` SET `bumped` = '" . time() . "' WHERE `id` = '" . $thread_replyto . "' AND `boardid` = " . $board_class->board['id']);
 		}
-
+		//prof_flag("9-start");
 		$tc_db->Execute("COMMIT");
-
+		//prof_flag("9-end");
+		//
+		//prof_flag("10");
 		// Trim any threads which have been pushed past the limit, or exceed the maximum age limit
 		TrimToPageLimit($board_class->board);
-
+		//prof_flag("11");
 		if (!KU_NEWCACHE_LOGIC) {
 			// Regenerate board pages
 			$board_class->RegeneratePages($page_from, $page_to);
 		}
-
+		//prof_flag("12");
 		// Regeneate JSON
 		$cl20 = new Cloud20();
 		$cl20->rebuild();
-
+		//prof_flag("13");
 		$need_overboard = I0_OVERBOARD_ENABLED && $board_class->board['section'] != '0' && $board_class->board['hidden'] == '0';
 
 		if ($thread_replyto == '0') {
@@ -533,7 +545,7 @@ if (isset($_POST['makepost'])) { // A more evident way to identify post action, 
 			$board_class->RegenerateThreads($thread_replyto);
 			notify($board_class->board['name'].':'.$thread_replyto, array('action' => 'new_reply', 'reply_id' => $post_id));
 		}
-		
+		//prof_flag("14");
 		// Regenerate overboard if it makes sense
 		if (!KU_NEWCACHE_LOGIC && $need_overboard) {
 			RegenerateOverboard($board_class->board['boardlist']);
@@ -559,7 +571,8 @@ if (isset($_POST['makepost'])) { // A more evident way to identify post action, 
 				}
 			}
 		}
-
+		//prof_flag("15");
+		//prof_print();
 	} else {
 		exitWithErrorPage(_gettext('Sorry, this board is locked and can not be posted in.'));
 	}
@@ -588,8 +601,10 @@ if (isset($_POST['makepost'])) { // A more evident way to identify post action, 
 
 	// Check rights
 	$pass = (isset($_POST['postpassword']) && $_POST['postpassword']!="") ? $_POST['postpassword'] : null;
-	$ismod = $_POST['moddelete']=="true";
-	if ($ismod)
+	//$ismod = $_POST['moddelete']=="true"; // ARE YOU SERIOUS?
+	$ismod_post = $_POST['moddelete']=="true";
+	$ismod = false;
+	if ($ismod_post)
 		require_once KU_ROOTDIR . 'inc/classes/manage.class.php';
 	$isop = ( 
 		$_POST['opdelete']
@@ -606,12 +621,14 @@ if (isset($_POST['makepost'])) { // A more evident way to identify post action, 
 				$external_boards[$post_brd] = new Board($post_brd);
 			}
 			$b_class = $external_boards[$post_brd];
+			$ismod = $ismod_post && Manage::CurrentUserIsAdministrator(); // TODO: need logic for boards mods
 		}
 		elseif (!isset($board_class))
 			$post_action->fail(_gettext('No board provided'));
 		else {
 			$b_class = $board_class;
-			$ismod = $ismod && Manage::CurrentUserIsModeratorOfBoard($b_class->board['name'], $_SESSION['manageusername']);
+			//$ismod = $ismod && Manage::CurrentUserIsModeratorOfBoard($b_class->board['name'], $_SESSION['manageusername']);
+			$ismod = $ismod_post && Manage::CurrentUserIsModeratorOfBoard($b_class->board['name'], $_SESSION['manageusername']);
 		}
 		if (!isset($pages_to_regenerate[$b_class->board['name']]))
 			$pages_to_regenerate[$b_class->board['name']] = array();
@@ -689,7 +706,7 @@ if (isset($_POST['makepost'])) { // A more evident way to identify post action, 
 					$pass_for_this_post = $passmd5_old;
 				}
 			}
-			$granted = $unlocked && ($ismod || ($pass && $pass_for_this_post == $pwd_ref_post->post['password']));
+			$granted = $unlocked && ($ismod || ($pass && $pwd_ref_post->post['password'] != "" && $pass_for_this_post == $pwd_ref_post->post['password']));
 			if ($granted) {
 				$thread_id = $post_class->post['parentid'] != '0' ? $post_class->post['parentid'] : $post_class->post['id'];
 				$room_id = $b_class->board['name'].':'.$thread_id;
@@ -847,7 +864,8 @@ if (isset($_POST['makepost'])) { // A more evident way to identify post action, 
 			$post_action->fail(_gettext('No board provided'));
 		else {
 			$b_class = $board_class;
-			$ismod = $ismod && Manage::CurrentUserIsModeratorOfBoard($b_class->board['name'], $_SESSION['manageusername']);
+			//$ismod = $ismod && Manage::CurrentUserIsModeratorOfBoard($b_class->board['name'], $_SESSION['manageusername']);
+			$ismod = $ismod_post && Manage::CurrentUserIsModeratorOfBoard($b_class->board['name'], $_SESSION['manageusername']);
 		}
 		if (!isset($pages_from[$b_class->board['name']]))
 			$pages_from[$b_class->board['name']] = INF;

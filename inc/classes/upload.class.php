@@ -525,8 +525,10 @@ class Upload {
 						AND `IS_DELETED` = 0");*/
 					$results = $tc_db->GetOne("SELECT COUNT(*)
 						FROM `" . KU_DBPREFIX . "postembeds`
-						WHERE `boardid` = " . $board_class->board['id'] . "
-						AND `file` = " . $tc_db->qstr($video_id));
+						WHERE 
+						`file` = " . $tc_db->qstr($video_id)."
+						AND
+						`boardid` = " . $board_class->board['id']);
 					// TODO: убрать $board_class->board['duplication'] после TODO см. выше
 					if ($results == 0 || $board_class->board['duplication']) {
 						/*$thumbw = $this->isreply ? KU_REPLYTHUMBWIDTH : KU_THUMBWIDTH;
@@ -581,8 +583,9 @@ class Upload {
 							LIMIT 1");*/
 						$results = $tc_db->GetAll("SELECT `id`,`parentid`
 							FROM `" . KU_DBPREFIX . "postembeds`
+							`file` = " . $tc_db->qstr($video_id) . "
+							AND
 							WHERE `boardid` = " . $board_class->board['id'] . "
-							AND `file` = " . $tc_db->qstr($video_id) . "
 							LIMIT 1");
 						foreach ($results as $line) {
 							$this->exitWithUploadErrorPage(

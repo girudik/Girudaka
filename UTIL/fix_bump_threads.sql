@@ -1,3 +1,4 @@
+UPDATE `posts` SET `bumped` = `timestamp` WHERE `parentid` = 0;
 UPDATE
 	`posts` AS `target`,
 	(SELECT * FROM `posts` WHERE boardid = 2 and id IN (
@@ -6,7 +7,7 @@ UPDATE
 		) GROUP BY parentid
 	) ORDER BY parentid ASC) AS `source`
 SET
-	`target`.`bumped` = `source`.`timestamp`
+    `target`.`bumped` = `source`.`timestamp`
 WHERE
-	`target`.`parentid` = 0 AND `target`.`id` = `source`.`parentid` AND `target`.`boardid` = `source`.`boardid` AND `target`.`bumped` != `source`.`timestamp`
+    `target`.`parentid` = 0 AND `target`.`id` = `source`.`parentid` AND `target`.`boardid` = `source`.`boardid` AND `target`.`bumped` != `source`.`timestamp`
 ;

@@ -372,8 +372,8 @@ class Manage {
 		if (count($results) > 0) {
 			$tpl_page .= '<table border="1" cellspacing="2" cellpadding="2" width="100%"><tr><th>'. _gettext('Board') . '</th><th>'. _gettext('Threads') . '</th><th>'. _gettext('Replies') . '</th><th>'. _gettext('Posts') . '</th></tr>';
 			foreach ($results as $line) {
-				$rows_threads = $tc_db->GetOne("SELECT HIGH_PRIORITY count(id) FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $line['id'] . " AND `parentid` = 0 AND `timestamp` >= " . (time() - 3600));
-				$rows_replies = $tc_db->GetOne("SELECT HIGH_PRIORITY count(id) FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $line['id'] . " AND `parentid` != 0 AND `timestamp` >= " . (time() - 3600));
+				$rows_threads = $tc_db->GetOne("SELECT HIGH_PRIORITY count(id) FROM `" . KU_DBPREFIX . "posts` WHERE `timestamp` >= " . (time() - 3600) ." AND `parentid` = 0 AND `boardid` = " . $line['id']);
+				$rows_replies = $tc_db->GetOne("SELECT HIGH_PRIORITY count(id) FROM `" . KU_DBPREFIX . "posts` WHERE `timestamp` >= " . (time() - 3600) ." AND `parentid` != 0 AND `boardid` = " . $line['id']);
 				$rows_posts = $rows_threads + $rows_replies;
 				$threads_perminute = $rows_threads;
 				$replies_perminute = $rows_replies;
@@ -1971,17 +1971,20 @@ class Manage {
 
 				$tc_db->SetFetchMode(ADODB_FETCH_ASSOC);
 				$tc_db->Execute("START TRANSACTION");
-				$postembeds = $tc_db->GetAll("SELECT `id`, `file_id`, `file`, `file_type`, `file_size_formatted`
+				$postembeds = $tc_db->GetAll("SELECT *
 				FROM `" . KU_DBPREFIX . "postembeds`
 				WHERE
-					`boardid`=$board_from_id
-					AND
 					(`id`=$thread_from OR `parentid`=$thread_from)
+					AND
+					`boardid`=$board_from_id
 				ORDER BY `parentid` ASC, `id` ASC");
 
 				$posts = group_embeds($postembeds);
 				$id_map = array();
 				$threads_to = array();
+				$special_parent_id = 0; // Special thread for old id
+				$special_display = '';
+				$special_locked = 0;
 				foreach($posts as $post) {
 					$id = $post['id'];
 					$new_id = $tc_db->GetOne("SELECT COALESCE(MAX(id),0) + 1 FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = '$board_to_id'");
@@ -1995,11 +1998,29 @@ class Manage {
 						`boardid` = $board_to_id".
 						($id == $thread_from ? ' ' : ", `parentid` = $thread_to ").
 					"WHERE
-						`boardid` = $board_from_id
+						`id` = $id
 						AND
-						`id` = $id");
+						`boardid` = $board_from_id
+						");
+					
+					// Special thread for old id
+					if ($id == $thread_from) {
+						$special_parent_id = 0;
+						$special_display = "Тред перенесён";
+						$special_locked = 1;
+					} else {
+						$special_parent_id = $thread_from;
+						$special_display = "Пост перенесён";
+						$special_locked = 0;
+					}
+					$sql = "INSERT INTO `" . KU_DBPREFIX . "posts`
+						(id, boardid, parentid, subject, message, timestamp, locked)
+						VALUES ($id, $board_from_id, $special_parent_id, '".$special_display."', '".$special_display." в <a href=\"/".$board_to."/res/".$thread_to.".html#".$new_id."\" class=\"ref|".$board_to."|".$thread_to."|".$new_id."\">&gt;&gt;/".$board_to."/".$new_id."</a>', UNIX_TIMESTAMP(), $special_locked);
+					";
+					$tc_db->Execute($sql);
+
 					foreach($post['embeds'] as $embed) {
-						if ($embed['file'] != 'removed') {
+						if ($embed['file'] != 'removed' || $embed['IS_FILE_DELETED'] != 1) {
 							$files = GetFileAndThumbs($embed);
 							// move file physically
 							foreach($files as $f) {
@@ -2050,7 +2071,7 @@ class Manage {
 							return $res;
 						}, $ref['message']);
 					}
-					$tc_db->Execute("UPDATE `" . KU_DBPREFIX . "posts` SET `message` = " . $tc_db->qstr($ref['message']) . " WHERE `boardid` = " . $ref_boardid . " AND `id` = " . $ref['id']);
+					$tc_db->Execute("UPDATE `" . KU_DBPREFIX . "posts` SET `message` = " . $tc_db->qstr($ref['message']) . " WHERE `id` = " . $ref['id']." `boardid` = " . $ref_boardid);
 				}
 				$tc_db->Execute("COMMIT");
 
@@ -2068,8 +2089,15 @@ class Manage {
 
 			$msg = _gettext('Move complete.');
 			// logging
-			for($i = 0; $i < count($thread_from); $i++) {
+			for($i = 0; $i < count($threads_from); $i++) {
 				management_addlogentry(_gettext('Moved thread') . ' '._gettext('From').' /'.$board_from.'/res/'. $threads_from[$i] . '.html '._gettext('To').' /' . $board_to . '/res/'. $threads_to[$i] . '.html', 5);
+				
+				/*$sql = "INSERT HIGH_PRIORITY INTO `" . KU_DBPREFIX . "posts`
+					(id, boardid, subject, message, locked)
+					VALUES (".$threads_from[$i].", ".$board_from_id.", 'Тред перенесён', 'Тред перенесён в <a href=\"/".$board_to."/res/".$threads_to[$i].".html\" class=\"ref|".$board_to."|".$threads_to[$i]."\">&gt;&gt;".$threads_to[$i]."</a>', 1);";
+				$tc_db->Execute($sql);
+				*/
+
 			}
 
 			if ($_POST['AJAX'])
@@ -2327,10 +2355,10 @@ class Manage {
 				<input type=\"hidden\" name=\"board\" value=\"$board\" />";
 			if ($thread == "0" ) {
 				$tpl_page .= "<h2>". sprintf(_gettext('All threads on /%s/'), $board) ."</h2>";
-				$results = $tc_db->GetAll("SELECT HIGH_PRIORITY * FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = $board_id AND (`id` = ".$tc_db->qstr($thread)." OR `parentid` = ".$tc_db->qstr($thread).") ORDER BY `id` DESC LIMIT 500");
+				$results = $tc_db->GetAll("SELECT HIGH_PRIORITY * FROM `" . KU_DBPREFIX . "posts` WHERE (`id` = ".$tc_db->qstr($thread)." OR `parentid` = ".$tc_db->qstr($thread).") AND `boardid` = $board_id ORDER BY `id` DESC LIMIT 500");
 			} else {
 				$tpl_page .= "<h2>". sprintf(_gettext('Thread %s on /%s/'), $thread, $board) ."</h2>";
-				$results = $tc_db->GetAll("SELECT HIGH_PRIORITY * FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = $board_id AND (`id` = ".$tc_db->qstr($thread)." OR `parentid` = ".$tc_db->qstr($thread).") ORDER BY `id` ASC");
+				$results = $tc_db->GetAll("SELECT HIGH_PRIORITY * FROM `" . KU_DBPREFIX . "posts` WHERE (`id` = ".$tc_db->qstr($thread)." OR `parentid` = ".$tc_db->qstr($thread).") AND `boardid` = $board_id ORDER BY `id` ASC");
 			}
 			$time = round(microtime(), 5);
 			$first = "1";
@@ -4122,9 +4150,9 @@ class Manage {
 					$sticky_board_id = $line['id'];
 				}
 				//$results = $tc_db->GetAll("SELECT HIGH_PRIORITY * FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $sticky_board_id ." AND `IS_DELETED` = '0' AND `parentid` = '0' AND `id` = " . $tc_db->qstr($_GET['postid']) . "");
-				$results = $tc_db->GetAll("SELECT HIGH_PRIORITY * FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $sticky_board_id ." AND `parentid` = '0' AND `id` = " . $tc_db->qstr($_GET['postid']) . "");
+				$results = $tc_db->GetAll("SELECT HIGH_PRIORITY * FROM `" . KU_DBPREFIX . "posts` WHERE `id` = " . $tc_db->qstr($_GET['postid']) . " AND `parentid` = '0' AND `boardid` = " . $sticky_board_id);
 				if (count($results) > 0) {
-					$tc_db->Execute("UPDATE `" . KU_DBPREFIX . "posts` SET `stickied` = '0' WHERE `boardid` = " . $sticky_board_id ." AND `parentid` = '0' AND `id` = " . $tc_db->qstr($_GET['postid']) . "");
+					$tc_db->Execute("UPDATE `" . KU_DBPREFIX . "posts` SET `stickied` = '0' WHERE `id` = " . $tc_db->qstr($_GET['postid']) . " AND `parentid` = '0' AND `boardid` = " . $sticky_board_id);
 					$board_class = new Board($sticky_board_name);
 					$board_class->RegenerateAll();
 					unset($board_class);
@@ -4183,9 +4211,9 @@ class Manage {
 					$sticky_board_id = $line['id'];
 				}
 				//$result = $tc_db->GetOne("SELECT HIGH_PRIORITY COUNT(*) FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $sticky_board_id . " AND `IS_DELETED` = '0' AND `parentid` = '0' AND `id` = " . $tc_db->qstr($_GET['postid']) . "");
-				$result = $tc_db->GetOne("SELECT HIGH_PRIORITY COUNT(*) FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $sticky_board_id . " AND `parentid` = '0' AND `id` = " . $tc_db->qstr($_GET['postid']) . "");
+				$result = $tc_db->GetOne("SELECT HIGH_PRIORITY COUNT(*) FROM `" . KU_DBPREFIX . "posts` WHERE `id` = " . $tc_db->qstr($_GET['postid']) . " AND `parentid` = '0' AND `boardid` = " . $sticky_board_id);
 				if ($result > 0) {
-					$tc_db->Execute("UPDATE `" . KU_DBPREFIX . "posts` SET `stickied` = '1' WHERE `boardid` = " . $sticky_board_id . " AND `parentid` = '0' AND `id` = " . $tc_db->qstr($_GET['postid']) . "");
+					$tc_db->Execute("UPDATE `" . KU_DBPREFIX . "posts` SET `stickied` = '1' WHERE `id` = " . $tc_db->qstr($_GET['postid']) . " AND `parentid` = '0' AND `boardid` = " . $sticky_board_id);
 					$board_class = new Board($sticky_board_name);
 					$board_class->RegenerateAll();
 					unset($board_class);
@@ -4238,7 +4266,7 @@ class Manage {
 		foreach ($results_boards as $line_board) {
 			$output .= '<h2>/'. $line_board['name'] . '/</h2>';
 			//$results = $tc_db->GetAll("SELECT HIGH_PRIORITY `id` FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $line_board['id'] . " AND `IS_DELETED` = '0' AND `parentid` = '0' AND `stickied` = '1'");
-			$results = $tc_db->GetAll("SELECT HIGH_PRIORITY `id` FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $line_board['id'] . " AND `parentid` = '0' AND `stickied` = '1'");
+			$results = $tc_db->GetAll("SELECT HIGH_PRIORITY `id` FROM `" . KU_DBPREFIX . "posts` WHERE `stickied` = '1' AND `parentid` = '0' AND `boardid` = " . $line_board['id']);
 			if (count($results) > 0) {
 				foreach ($results as $line) {
 					$output .= '<a href="?action=unstickypost&board='. $line_board['name'] . '&postid='. $line['id'] . '">#'. $line['id'] . '</a><br />';
@@ -4276,9 +4304,9 @@ class Manage {
 					$lock_board_id = $line['id'];
 				}
 				//$results = $tc_db->GetAll("SELECT HIGH_PRIORITY * FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $lock_board_id . " AND `IS_DELETED` = '0' AND `parentid` = '0' AND `id` = " . $tc_db->qstr($_GET['postid']) . "");
-				$results = $tc_db->GetAll("SELECT HIGH_PRIORITY * FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $lock_board_id . " AND `parentid` = '0' AND `id` = " . $tc_db->qstr($_GET['postid']) . "");
+				$results = $tc_db->GetAll("SELECT HIGH_PRIORITY * FROM `" . KU_DBPREFIX . "posts` WHERE `id` = " . $tc_db->qstr($_GET['postid']) . " AND `parentid` = '0' AND `boardid` = " . $lock_board_id);
 				if (count($results) > 0) {
-					$tc_db->Execute("UPDATE `" . KU_DBPREFIX . "posts` SET `locked` = '1' WHERE `boardid` = " . $lock_board_id . " AND `parentid` = '0' AND `id` = " . $tc_db->qstr($_GET['postid']) . "");
+					$tc_db->Execute("UPDATE `" . KU_DBPREFIX . "posts` SET `locked` = '1' WHERE `id` = " . $tc_db->qstr($_GET['postid']) . " AND `parentid` = '0' AND `boardid` = " . $lock_board_id);
 					$board_class = new Board($lock_board_name);
 					$board_class->RegenerateAll();
 					unset($board_class);
@@ -4330,9 +4358,9 @@ class Manage {
 					$lock_board_id = $line['id'];
 				}
 				//$results = $tc_db->GetAll("SELECT HIGH_PRIORITY * FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $lock_board_id . " AND `IS_DELETED` = '0' AND `parentid` = '0' AND `id` = " . $tc_db->qstr($_GET['postid']) . "");
-				$results = $tc_db->GetAll("SELECT HIGH_PRIORITY * FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $lock_board_id . " AND `parentid` = '0' AND `id` = " . $tc_db->qstr($_GET['postid']) . "");
+				$results = $tc_db->GetAll("SELECT HIGH_PRIORITY * FROM `" . KU_DBPREFIX . "posts` WHERE `id` = " . $tc_db->qstr($_GET['postid']) . " AND `parentid` = '0' AND `boardid` = " . $lock_board_id);
 				if (count($results) > 0) {
-					$tc_db->Execute("UPDATE `" . KU_DBPREFIX . "posts` SET `locked` = '0' WHERE `boardid` = " . $lock_board_id . " AND `parentid` = '0' AND `id` = " . $tc_db->qstr($_GET['postid']) . "");
+					$tc_db->Execute("UPDATE `" . KU_DBPREFIX . "posts` SET `locked` = '0' WHERE `id` = " . $tc_db->qstr($_GET['postid']) . " AND `parentid` = '0' AND `boardid` = " . $lock_board_id);
 					$board_class = new Board($lock_board_name);
 					$board_class->RegenerateAll();
 					unset($board_class);
@@ -4384,7 +4412,7 @@ class Manage {
 		foreach ($results_boards as $line_board) {
 			$output .= '<h2>/'. $line_board['name'] . '/</h2>';
 			//$results = $tc_db->GetAll("SELECT HIGH_PRIORITY `id` FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $line_board['id'] . " AND `IS_DELETED` = '0' AND `parentid` = '0' AND `locked` = '1'");
-			$results = $tc_db->GetAll("SELECT HIGH_PRIORITY `id` FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $line_board['id'] . " AND `parentid` = '0' AND `locked` = '1'");
+			$results = $tc_db->GetAll("SELECT HIGH_PRIORITY `id` FROM `" . KU_DBPREFIX . "posts` WHERE `locked` = '1' AND `parentid` = '0' AND `boardid` = " . $line_board['id']);
 			if (count($results) > 0) {
 				foreach ($results as $line) {
 					$output .= '<a href="?action=unlockpost&board='. $line_board['name'] . '&postid='. $line['id'] . '">#'. $line['id'] . '</a><br />';
@@ -4431,7 +4459,7 @@ class Manage {
 				}
 				if (isset($_POST['delthreadid'])) {
 					if ($_POST['delthreadid'] > 0) {
-						$results = $tc_db->GetAll("SELECT HIGH_PRIORITY * FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $board_id . " AND `IS_DELETED` = '0' AND `id` = " . $tc_db->qstr($_POST['delthreadid']) . " AND `parentid` = '0'");
+						$results = $tc_db->GetAll("SELECT HIGH_PRIORITY * FROM `" . KU_DBPREFIX . "posts` WHERE `id` = " . $tc_db->qstr($_POST['delthreadid']) . " AND `parentid` = '0' AND `IS_DELETED` = '0' AND `boardid` = " . $board_id);
 						if (count($results) > 0) {
 							if (isset($_POST['fileonly'])) {
 								foreach ($results as $line) {
@@ -4440,7 +4468,8 @@ class Manage {
 										if ($del) {
 											@unlink(KU_ROOTDIR . $_POST['boarddir'] . '/thumb/'. $line['file'] . 's.'. $line['file_type']);
 											@unlink(KU_ROOTDIR . $_POST['boarddir'] . '/thumb/'. $line['file'] . 'c.'. $line['file_type']);
-											$tc_db->Execute("UPDATE `".KU_DBPREFIX."posts` SET `file` = 'removed', `file_md5` = '' WHERE `boardid` = " . $board_id . " AND `id` = ".$_POST['delthreadid']." LIMIT 1");
+											//$tc_db->Execute("UPDATE `".KU_DBPREFIX."posts` SET `file` = 'removed', `file_md5` = '' WHERE `boardid` = " . $board_id . " AND `id` = ".$_POST['delthreadid']." LIMIT 1");
+											$tc_db->Execute("UPDATE `".KU_DBPREFIX."posts` SET `IS_FILE_DELETED` = 1 WHERE `id` = ".$_POST['delthreadid']." AND `boardid` = " . $board_id . " LIMIT 1");
 											$tpl_page .= '<hr />File successfully deleted<hr />';
 										} else {
 											$tpl_page .= '<hr />That file has already been deleted.<hr />';
@@ -4482,7 +4511,7 @@ class Manage {
 				}
 				elseif (isset($_POST['delpostid'])) {
 					if ($_POST['delpostid'] > 0) {
-						$results = $tc_db->GetAll("SELECT HIGH_PRIORITY * FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $board_id . " AND `IS_DELETED` = '0' AND `id` = " . $tc_db->qstr($_POST['delpostid']) . "");
+						$results = $tc_db->GetAll("SELECT HIGH_PRIORITY * FROM `" . KU_DBPREFIX . "posts` WHERE `id` = " . $tc_db->qstr($_POST['delpostid']) . " AND `IS_DELETED` = '0' AND `boardid` = " . $board_id);
 						if (count($results) > 0) {
 							if (isset($_POST['fileonly'])) {
 								foreach ($results as $line) {
@@ -4491,7 +4520,8 @@ class Manage {
 										if ($del) {
 											@unlink(KU_ROOTDIR . $_POST['boarddir'] . '/thumb/'. $line['file'] . 's.'. $line['file_type']);
 											@unlink(KU_ROOTDIR . $_POST['boarddir'] . '/thumb/'. $line['file'] . 'c.'. $line['file_type']);
-											$tc_db->Execute("UPDATE `".KU_DBPREFIX."posts` SET `file` = 'removed', `file_md5` = '' WHERE `boardid` = " . $board_id . " AND `id` = ".$_POST['delpostid']." LIMIT 1");
+											//$tc_db->Execute("UPDATE `".KU_DBPREFIX."posts` SET `file` = 'removed', `file_md5` = '' WHERE `boardid` = " . $board_id . " AND `id` = ".$_POST['delpostid']." LIMIT 1");
+											$tc_db->Execute("UPDATE `".KU_DBPREFIX."posts` SET `IS_FILE_DELETED` = 1, WHERE id` = ".$_POST['delpostid']." AND `boardid` = " . $board_id . " LIMIT 1");
 											$tpl_page .= '<hr />File successfully deleted<hr />';
 										} else {
 											$tpl_page .= '<hr />That file has already been deleted.<hr />';
@@ -4619,7 +4649,7 @@ class Manage {
 			$tpl_page .= '<table border="1" width="100%"><tr><th>Id</th><th>Board</th><th>Post</th><th>File</th><th>Message</th><th>Reason</th><th>Time</th><th>Action</th></tr>';
 			foreach ($resultsreport as $linereport) {
 				$reportboardid = $tc_db->GetOne("SELECT HIGH_PRIORITY `id` FROM `" . KU_DBPREFIX . "boards` WHERE `name` = " . $tc_db->qstr($linereport['board']) . "");
-				$results = $tc_db->GetAll("SELECT * FROM `" . KU_DBPREFIX . "postembeds` WHERE `boardid` = " . $reportboardid . " AND `id` = " . $tc_db->qstr($linereport['postid']) . "");
+				$results = $tc_db->GetAll("SELECT * FROM `" . KU_DBPREFIX . "postembeds` WHERE `id` = " . $tc_db->qstr($linereport['postid']) . " AND `boardid` = " . $reportboardid);
 				foreach ($results as $line) {
 					if ($line['IS_DELETED'] == 0) {
 						$tpl_page .= '<tr><td>'.$linereport['id'].'</td>';
@@ -4632,7 +4662,7 @@ class Manage {
 							$post_threadorpost = 'post';
 						}
 						$tpl_page .= '.html#'. $linereport['postid'] . '">'. $line['id'] . '</a></td><td>';
-						if ($line['file'] == 'removed') {
+						if ($line['file'] == 'removed' || $line['IS_FILE_DELETED'] == 1) {
 							$tpl_page .= 'removed';
 						} elseif ($line['file'] == '') {
 							$tpl_page .= 'none';
@@ -4682,7 +4712,7 @@ class Manage {
 			$ban_board_id = $tc_db->GetOne("SELECT HIGH_PRIORITY `id` FROM `" . KU_DBPREFIX . "boards` WHERE `name` = " . $tc_db->qstr($_POST['board']) . "");
 			if (!empty($ban_board_id)) {
 				foreach ( $_POST['post'] as $post ) {
-					$results = $tc_db->GetAll("SELECT HIGH_PRIORITY * FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = '" . $ban_board_id . "' AND `id` = " . intval($post) . "");
+					$results = $tc_db->GetAll("SELECT HIGH_PRIORITY * FROM `" . KU_DBPREFIX . "posts` WHERE `id` = " . intval($post) . " AND `boardid` = '" . $ban_board_id . "'");
 					if (count($results) > 0) {
 						$multiban[] = md5_decrypt($results[0]['ip'], KU_RANDOMSEED);
 						$multiban_hash[] = $results[0]['file_md5'];
@@ -4696,7 +4726,7 @@ class Manage {
 			$ban_board = $_GET['banboard'];
 			$ban_post_id = $_GET['banpost'];
 			if (!empty($ban_board_id)) {
-				$results = $tc_db->GetAll("SELECT HIGH_PRIORITY * FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = '" . $ban_board_id . "' AND `id` = " . $tc_db->qstr($_GET['banpost']) . "");
+				$results = $tc_db->GetAll("SELECT HIGH_PRIORITY * FROM `" . KU_DBPREFIX . "posts` WHERE `id` = " . $tc_db->qstr($_GET['banpost']) . " AND `boardid` = '" . $ban_board_id . "'");
 				if (count($results) > 0) {
 					$ban_ip = md5_decrypt($results[0]['ip'], KU_RANDOMSEED);
 					$ban_hash = $results[0]['file_md5'];
@@ -4825,10 +4855,10 @@ class Manage {
 								$postids = Array($ban_post_id);
 							else
 								$postids = unserialize($_POST['quickmultibanpostid']);
-							$results = $tc_db->GetAll("SELECT HIGH_PRIORITY `parentid`, `message` FROM `".KU_DBPREFIX."posts` WHERE `boardid` = " . $tc_db->qstr($ban_board_id) . " AND `id` = ".$tc_db->qstr($postids[$i])." LIMIT 1");
+							$results = $tc_db->GetAll("SELECT HIGH_PRIORITY `parentid`, `message` FROM `".KU_DBPREFIX."posts` WHERE `id` = ".$tc_db->qstr($postids[$i])." AND `boardid` = " . $tc_db->qstr($ban_board_id) . " LIMIT 1");
 
 							foreach($results AS $line) {
-								$tc_db->Execute("UPDATE `".KU_DBPREFIX."posts` SET `message` = ".$tc_db->qstr($line['message'] . $ban_msg)." WHERE `boardid` = " . $tc_db->qstr($ban_board_id) . " AND `id` = ".$tc_db->qstr($postids[$i]));
+								$tc_db->Execute("UPDATE `".KU_DBPREFIX."posts` SET `message` = ".$tc_db->qstr($line['message'] . $ban_msg)." WHERE `id` = ".$tc_db->qstr($postids[$i])." AND `boardid` = " . $tc_db->qstr($ban_board_id));
 								clearPostCache($postids[$i], $ban_board_id);
 								if ($line['parentid']==0) {
 									if (!in_array($postids, $regenerated)) {
@@ -5349,14 +5379,14 @@ class Manage {
 
 		if ($imagesshown <= $_SESSION['imagesperpage']) {
 			//$results = $tc_db->GetAll("SELECT HIGH_PRIORITY `" . KU_DBPREFIX . "boards`.`name` AS `boardname`, `" . KU_DBPREFIX . "posts`.`boardid` AS boardid, `" . KU_DBPREFIX . "posts`.`id` AS id, `" . KU_DBPREFIX . "posts`.`parentid` AS parentid, `" . KU_DBPREFIX . "posts`.`file` AS file, `" . KU_DBPREFIX . "posts`.`file_type` AS file_type, `" . KU_DBPREFIX . "posts`.`thumb_w` AS thumb_w, `" . KU_DBPREFIX . "posts`.`thumb_h` AS thumb_h FROM `" . KU_DBPREFIX . "posts`, `" . KU_DBPREFIX ."boards` WHERE (`file_type` = 'jpg' OR `file_type` = 'gif' OR `file_type` = 'png') AND `reviewed` = 0 AND `IS_DELETED` = 0 AND `" . KU_DBPREFIX . "boards`.`id` = `" . KU_DBPREFIX . "posts`.`boardid` ORDER BY `timestamp` DESC LIMIT " . intval($_SESSION['imagesperpage']));
-
-			$results = $tc_db->GetAll("SELECT HIGH_PRIORITY `" . KU_DBPREFIX . "boards`.`name` AS `boardname`, `" . KU_DBPREFIX . "postembeds`.`boardid` AS boardid, `" . KU_DBPREFIX . "postembeds`.`id` AS id, `" . KU_DBPREFIX . "postembeds`.`parentid` AS parentid, `" . KU_DBPREFIX . "postembeds`.`file` AS file, `" . KU_DBPREFIX . "postembeds`.`file_type` AS file_type, `" . KU_DBPREFIX . "postembeds`.`thumb_w` AS thumb_w, `" . KU_DBPREFIX . "postembeds`.`thumb_h` AS thumb_h FROM `" . KU_DBPREFIX . "postembeds`, `" . KU_DBPREFIX ."boards` WHERE (`file_type` = 'jpg' OR `file_type` = 'gif' OR `file_type` = 'png') AND `reviewed` = 0 AND `" . KU_DBPREFIX . "boards`.`id` = `" . KU_DBPREFIX . "postembeds`.`boardid` ORDER BY `timestamp` DESC LIMIT " . intval($_SESSION['imagesperpage']));
+			//$results = $tc_db->GetAll("SELECT HIGH_PRIORITY `" . KU_DBPREFIX . "boards`.`name` AS `boardname`, `" . KU_DBPREFIX . "postembeds`.`boardid` AS boardid, `" . KU_DBPREFIX . "postembeds`.`id` AS id, `" . KU_DBPREFIX . "postembeds`.`parentid` AS parentid, `" . KU_DBPREFIX . "postembeds`.`file` AS file, `" . KU_DBPREFIX . "postembeds`.`file_type` AS file_type, `" . KU_DBPREFIX . "postembeds`.`thumb_w` AS thumb_w, `" . KU_DBPREFIX . "postembeds`.`thumb_h` AS thumb_h FROM `" . KU_DBPREFIX . "postembeds`, `" . KU_DBPREFIX ."boards` WHERE (`file_type` = 'jpg' OR `file_type` = 'gif' OR `file_type` = 'png') AND `reviewed` = 0 AND `" . KU_DBPREFIX . "boards`.`id` = `" . KU_DBPREFIX . "postembeds`.`boardid` ORDER BY `timestamp` DESC LIMIT " . intval($_SESSION['imagesperpage']));
+			$results = $tc_db->GetAll("SELECT HIGH_PRIORITY `" . KU_DBPREFIX . "boards`.`name` AS `boardname`, `" . KU_DBPREFIX . "postembeds`.`boardid` AS boardid, `" . KU_DBPREFIX . "postembeds`.`id` AS id, `" . KU_DBPREFIX . "postembeds`.`parentid` AS parentid, `" . KU_DBPREFIX . "postembeds`.`file` AS file, `" . KU_DBPREFIX . "postembeds`.`file_type` AS file_type, `" . KU_DBPREFIX . "postembeds`.`thumb_w` AS thumb_w, `" . KU_DBPREFIX . "postembeds`.`thumb_h` AS thumb_h, `" . KU_DBPREFIX . "postembeds`.`IS_FILE_DELETED` AS IS_FILE_DELETED FROM `" . KU_DBPREFIX . "postembeds`, `" . KU_DBPREFIX ."boards` WHERE (`file_type` = 'jpg' OR `file_type` = 'gif' OR `file_type` = 'png') AND `reviewed` = 0 AND `" . KU_DBPREFIX . "boards`.`id` = `" . KU_DBPREFIX . "postembeds`.`boardid` ORDER BY `timestamp` DESC LIMIT " . intval($_SESSION['imagesperpage']));
 			if (count($results) > 0) {
 				$reviewsql = "UPDATE `" . KU_DBPREFIX . "postembeds` SET `reviewed` = 1 WHERE ";
 				$tpl_page .= '<table border="1">'. "\n";
 				foreach ($results as $line) {
-					if ($line['file'] != "removed") {
-						$reviewsql .= '(`boardid` = '.$line['boardid'] .' AND `id` = '. $line['id'] . ') OR ';
+					if ($line['file'] != "removed" || $line['IS_FILE_DELETED'] != 1) {
+						$reviewsql .= '(`id` = '. $line['id'] . ' AND `boardid` = '.$line['boardid'] .') OR ';
 						$real_parentid = ($line['parentid'] == 0) ? $line['id'] : $line['parentid'];
 						$tpl_page .= '<tr><td><a href="'. KU_BOARDSPATH . '/'. $line['boardname'] . '/res/'. $real_parentid . '.html#'. $line['id'] . '">/'. $line['boardname'] . '/'. $line['id'] . '</td><td><a href="'. KU_BOARDSPATH . '/'. $line['boardname'] . '/res/'. $real_parentid . '.html#'. $line['id'] . '"><img loading="lazy" src="'. KU_BOARDSPATH . '/'. $line['boardname'] . '/thumb/'. $line['file'] . 's.'. $line['file_type'] . '" width="'. $line['thumb_w'] . '" height="'. $line['thumb_h'] . '" border="0"></a></td></tr>';
 					}
@@ -5423,7 +5453,7 @@ class Manage {
 				$tpl_page .= '<table border="1" width="1005%">'. "\n";
 				$tpl_page .= '<tr><th width="75px">'._gettext('Post Number').'</th><th>'._gettext('Post Message').'</th><th width="100px">'._gettext('Poster IP').'</th></tr>'. "\n";
 				foreach ($results as $line) {
-					$reviewsql .= '(`boardid` = '.$line['boardid'] .' AND `id` = '. $line['id'] . ') OR ';
+					$reviewsql .= '(`id` = '. $line['id'] . ' AND `boardid` = '.$line['boardid'] .') OR ';
 					$real_parentid = ($line['parentid'] == 0) ? $line['id'] : $line['parentid'];
 					$tpl_page .= '<tr><td><a href="'. KU_BOARDSPATH . '/'. $line['boardname'] . '/res/'. $real_parentid . '.html#'. $line['id'] . '">/'. $line['boardname'] . '/'. $line['id'] . '</td><td>'. stripslashes($line['message']) . '</td><td>'. md5_decrypt($line['ip'], KU_RANDOMSEED) . '</tr>';
 				}
@@ -5591,7 +5621,8 @@ class Manage {
 			}
 			$file_md5list = array();
 			//$results = $tc_db->GetAll("SELECT HIGH_PRIORITY `file_md5` FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $lineboard['id'] . " AND `IS_DELETED` = 0 AND `file` != '' AND `file` != 'removed' AND `file_md5` != ''");
-			$results = $tc_db->GetAll("SELECT HIGH_PRIORITY `file_md5` FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $lineboard['id'] . " AND `file` != '' AND `file` != 'removed' AND `file_md5` != ''");
+			//$results = $tc_db->GetAll("SELECT HIGH_PRIORITY `file_md5` FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $lineboard['id'] . " AND `file` != '' AND `file` != 'removed' AND `file_md5` != ''");
+			$results = $tc_db->GetAll("SELECT HIGH_PRIORITY `file_md5` FROM `" . KU_DBPREFIX . "posts` WHERE `file_md5` != '' AND `file` != '' AND (`file` != 'removed' OR `IS_FILE_DELETED` != 1) AND `boardid` = " . $lineboard['id']);
 			foreach ($results as $line) {
 				$file_md5list[] = $line['file_md5'];
 			}
@@ -5627,10 +5658,10 @@ class Manage {
 				$tpl_page .= '<strong>'. _gettext('Looking for orphans in') .' /'. $lineboard['name'] . '/</strong><br />';
 			}
 			//$results = $tc_db->GetAll("SELECT HIGH_PRIORITY `id`, `parentid` FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $lineboard['id'] . " AND `parentid` != '0' AND `IS_DELETED` = 0");
-			$results = $tc_db->GetAll("SELECT HIGH_PRIORITY `id`, `parentid` FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $lineboard['id'] . " AND `parentid` != '0'");
+			$results = $tc_db->GetAll("SELECT HIGH_PRIORITY `id`, `parentid` FROM `" . KU_DBPREFIX . "posts` WHERE `parentid` != '0' AND `boardid` = " . $lineboard['id']);
 			foreach ($results as $line) {
 				//$exists_rows = $tc_db->GetAll("SELECT HIGH_PRIORITY COUNT(*) FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $lineboard['id'] . " AND `id` = '" . $line['parentid'] . "' AND `IS_DELETED` = 0", 1);
-				$exists_rows = $tc_db->GetAll("SELECT HIGH_PRIORITY COUNT(*) FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $lineboard['id'] . " AND `id` = '" . $line['parentid'] . "'", 1);
+				$exists_rows = $tc_db->GetAll("SELECT HIGH_PRIORITY COUNT(*) FROM `" . KU_DBPREFIX . "posts` WHERE `id` = '" . $line['parentid'] . "' AND `boardid` = " . $lineboard['id'], 1);
 				if ($exists_rows[0] == 0) {
 					$post_class = new Post($line['id'], $lineboard['name'], $lineboard['id']);
 					$post_class->Delete;
@@ -5706,7 +5737,7 @@ class Manage {
 			if (!$this->CurrentUserIsModeratorOfBoard($_GET['boarddir'], $_SESSION['manageusername'])) {
 				die();
 			}
-			$ip = $tc_db->GetAll("SELECT HIGH_PRIORITY * FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $tc_db->qstr($results[0]['id']) . " AND `id` = " . $tc_db->qstr($_GET['id']));
+			$ip = $tc_db->GetAll("SELECT HIGH_PRIORITY * FROM `" . KU_DBPREFIX . "posts` WHERE `id` = " . $tc_db->qstr($_GET['id'])." AND `boardid` = " . $tc_db->qstr($results[0]['id']));
 			die("dnb-".$_GET['boarddir']."-".$_GET['id']."-".(($ip[0]['parentid'] == 0) ? ("y") : ("n"))."=".md5_decrypt($ip[0]['ip'], KU_RANDOMSEED));
 		}
 		die();

@@ -20,14 +20,12 @@
   </span>
   {if $post.IS_DELETED}
 	{$thread_deleted = 1}
+	{if $isthread}<h2 class="deleted_thread"> Тред удалён </h2>{/if}
 	<details class="deleted">
 		<summary class="deleted" title="Тред удалён"></summary>
 	{/if}
   <div id="thread{$post.id}-{$board.name}" data-threadid="{$post.id}" class="{if $isthread}replies {/if}deleted_{$post.IS_DELETED}" data-boardid="{$board.id}"> {* #thread → *}
    <div class="postnode op" data-id="{$post.id}" data-board="{$board.name}"> {* .postnode.op → *}
-
-    {if $post.IS_DELETED && $isthread} <h2 class="deleted_thread"> Тред удалён </h2>{/if}
-
     <a name="s{$.foreach.thread.iteration}"></a>
  {else} {* If reply → *}
   {if $isthread}<div class="i0svcel">!i0-pd:{$post.id}</div>{/if} {* post delimiter for quick parsing *}
@@ -36,7 +34,7 @@
   <details class="deleted">
     <summary class="deleted" title="Пост удалён"></summary>
   {/if}
-  <table id="postnode{$post.id}-{$board.name}" class="postnode" data-id="{$post.id}" data-board="{$board.name}"><tbody>
+  <table id="postnode{$post.id}-{$board.name}" class="postnode deleted_{$post.IS_DELETED}" data-id="{$post.id}" data-board="{$board.name}"><tbody>
    <tr>
     <td class="doubledash">&gt;&gt;</td>
     <td class="reply" id="reply{$post.id}"> {* td.reply → *}
@@ -156,8 +154,8 @@
   {if $post.embeds}
    <div class="embedgroup">
     {foreach item=embed from=$post.embeds name=embeds}
-     {if $embed.file neq 'removed' || $post.deleted_files < 2}
-      {if $embed.file eq 'removed'}
+     {if $embed.file neq 'removed' && !$embed.IS_FILE_DELETED || $post.deleted_files < 2}
+      {if $embed.file eq 'removed' || $embed.IS_FILE_DELETED }
        <div class="nothumb">
         {t}File<br />Removed{/t}
        </div>

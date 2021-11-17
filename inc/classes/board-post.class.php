@@ -90,7 +90,9 @@ class Board {
 
 					// Get the unique posts for this board
 					//$this->board['uniqueposts']   = $tc_db->GetOne("SELECT COUNT(DISTINCT `ipmd5`) FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $this->board['id']. " AND  `IS_DELETED` = 0");
-					$this->board['uniqueposts']   = $tc_db->GetOne("SELECT COUNT(DISTINCT `ipmd5`) FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $this->board['id']);
+					// TODO: what for? ~0.5sec
+					//$this->board['uniqueposts']   = $tc_db->GetOne("SELECT COUNT(DISTINCT `ipmd5`) FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $this->board['id']);
+					$this->board['uniqueposts'] = 1;
 					
 					if ($this->board['locale'] && $this->board['locale'] != KU_LOCALE) {
 						changeLocale($this->board['locale']);
@@ -208,9 +210,9 @@ class Board {
 			`IS_DELETED`
 			FROM `".KU_DBPREFIX."posts` 
 			WHERE
-			 `boardid`='".$this->board['id']."'
-			 AND
-			 `parentid`=0
+			`parentid`=0
+			AND
+			`boardid`='".$this->board['id']."'
 			ORDER BY `bumped` DESC");
 		$i = 0; 
 		$found = false;
@@ -250,8 +252,9 @@ class Board {
 			ORDER BY `stickied` DESC, `bumped` DESC");*/
 		$threads = $tc_db->GetAll("SELECT *
 			FROM `" . KU_DBPREFIX . "postembeds`
-			WHERE `boardid` = " . $this->board['id'] . "
-			AND `parentid` = 0
+			WHERE `parentid` = 0
+			AND
+			`boardid` = " . $this->board['id'] . "
 			ORDER BY `stickied` DESC, `bumped` DESC");
 		$threads = group_embeds($threads, true);
 		$total_threads = count($threads);
@@ -294,8 +297,11 @@ class Board {
 				SUM(CASE WHEN `file_md5` != '' THEN 1 ELSE 0 END) `images`,
 				SUM(`IS_DELETED`) `IS_DELETED`
 			FROM `".KU_DBPREFIX."postembeds`
-			WHERE `boardid` = '". $this->board['id'] ." '
-				AND `parentid` = '". $threads[$i]['id'] ."'");
+			WHERE
+				`parentid` = '". $threads[$i]['id'] ."'
+				AND
+				`boardid` = '". $this->board['id'] ."'
+				");
 			$stats = $stats[0];
 			//$threads[$i]['reply_count'] = $stats['reply_count'];
 			$threads[$i]['reply_count'] = ($stats['reply_count'] - $stats['IS_DELETED']);
@@ -357,8 +363,10 @@ class Board {
 						JOIN (
 							SELECT DISTINCT `id`
 							FROM `".KU_DBPREFIX."postembeds`
-							WHERE `boardid` = '". $this->board['id'] ."'
-								AND `parentid` = ".$thread['id']."
+							WHERE 
+							`parentid` = ".$thread['id']."
+							AND 
+							`boardid` = '". $this->board['id'] ."'
 								" . $deleted . "
 							ORDER BY `id` DESC
 							LIMIT ".(($thread['stickied'] == 1) ? (KU_REPLIESSTICKY) : (KU_REPLIES))."
@@ -514,7 +522,7 @@ class Board {
 
 						$file_found = false;
 						foreach ($thread['embeds'] as $embed) {
-							if ($embed['file'] != 'removed') {
+							if ($embed['file'] != 'removed' || $embed['IS_FILE_DELETED'] != 1) {
 								if (in_array($embed['file_type'], array('jpg', 'png', 'gif', 'webm', 'mp4'))) {
 									$file_found = $embed;
 									break;
@@ -529,7 +537,7 @@ class Board {
 						}
 
 						if ($file_found) {
-							if ($file_found['file'] !== 'removed') {
+							if ($file_found['file'] !== 'removed' || $file_found['IS_FILE_DELETED'] != 1) {
 								if ($file_found['file_type'] == 'webm' || $file_found['file_type'] == 'mp4')
 									$file_found['file_type'] = 'jpg';
 								if (in_array($file_found['file_type'], array('jpg', 'png', 'gif'))) {
@@ -610,9 +618,12 @@ class Board {
 			SUM(CASE WHEN `file_md5` != '' THEN 1 ELSE 0 END) `images`,
 			SUM(`IS_DELETED`) `deleted_posts`
 		FROM `".KU_DBPREFIX."postembeds`
-		WHERE `boardid` = '". $this->board['id'] ." '
+		WHERE
+		`parentid` = '". $op_id ."'
+		AND
+		`boardid` = '". $this->board['id'] ."'
 			/*AND `IS_DELETED` = 0*/
-			AND `parentid` = '". $op_id ."'");
+		");
 		$stats = $stats[0];
 		// ← fill thread stats
 
@@ -629,8 +640,9 @@ class Board {
 					(CASE WHEN `parentid`='0' THEN 1 ELSE 0 END) `is_op`
 				FROM `".KU_DBPREFIX."posts`
 				WHERE 
+					(`id`='". $op_id ."' OR `parentid` = '". $op_id ."')
+					AND
 					`boardid` = '". $this->board['id'] ."' 
-					AND (`id`='". $op_id ."' OR `parentid` = '". $op_id ."')
 					". $deleted ."
 				ORDER BY `is_op` DESC, `id` DESC
 				LIMIT ".(KU_REPLIES+1)."
@@ -703,7 +715,7 @@ class Board {
 			$header = $this->PageHeader(1);
 			$postbox = $this->Postbox(1);
 			//$threads = $tc_db->GetAll("SELECT `id` FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $this->board['id'] . " AND `parentid` = 0 AND `IS_DELETED` = 0 ORDER BY `id` DESC");
-			$threads = $tc_db->GetAll("SELECT `id` FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $this->board['id'] . " AND `parentid` = 0 ORDER BY `id` DESC");
+			$threads = $tc_db->GetAll("SELECT `id` FROM `" . KU_DBPREFIX . "posts` WHERE `parentid` = 0 AND `boardid` = " . $this->board['id'] . "ORDER BY `id` DESC");
 			if (count($threads) > 0) {
 				foreach($threads as $thread) {
 					$this->BuildThread($thread['id'], $header, $postbox);
@@ -724,7 +736,7 @@ class Board {
 		$numimages = 0;
 		$executiontime_start_thread = microtime_float();
 		//$posts = $tc_db->GetAll("SELECT * FROM `" . KU_DBPREFIX . "postembeds` WHERE `boardid` = " . $this->board['id'] . " AND (`id` = " . $id . " OR `parentid` = " . $id . ") AND `IS_DELETED` = 0 ORDER BY `id` ASC");
-		$posts = $tc_db->GetAll("SELECT * FROM `" . KU_DBPREFIX . "postembeds` WHERE `boardid` = " . $this->board['id'] . " AND (`id` = " . $id . " OR `parentid` = " . $id . ") ORDER BY `id` ASC");
+		$posts = $tc_db->GetAll("SELECT * FROM `" . KU_DBPREFIX . "postembeds` WHERE  (`id` = " . $id . " OR `parentid` = " . $id . ") AND `boardid` = " . $this->board['id'] . " ORDER BY `id` ASC");
 		// There might be a chance that the post was deleted during another RegenerateThreads() session, if there are no posts, move on to the next thread.
 		if (count($posts) > 0) {
 			$posts = group_embeds($posts, true);
@@ -1076,11 +1088,16 @@ class Board {
 	function EraseFileAndThumbs($file) {
 		global $tc_db;
 
+		/*$dups_exist = $tc_db->GetOne("SELECT COUNT(*) FROM `".KU_DBPREFIX."postembeds`
+			WHERE `file_md5`= ? 
+			AND `boardid` = ?
+			AND `IS_DELETED` = 0
+			AND `file` != 'removed'", array($file['file_md5'], $this->board['id']));*/
 		$dups_exist = $tc_db->GetOne("SELECT COUNT(*) FROM `".KU_DBPREFIX."postembeds`
 			WHERE `file_md5`= ? 
 			AND `boardid` = ?
 			AND `IS_DELETED` = 0
-			AND `file` != 'removed'", array($file['file_md5'], $this->board['id']));
+			AND (`file` != 'removed' AND `IS_FILE_DELETED` != 1)", array($file['file_md5'], $this->board['id']));
 		if ($dups_exist)
 			return;
 
@@ -1098,13 +1115,16 @@ class Board {
 
 	function DeleteFile($file_id, $pass, $ismod, $boardname) {
 		global $tc_db;
-		if (! is_numeric($file_id))
+		if (!$ismod && $postfile['password'] != $pass) {
+			return array('error' => _gettext('Incorrect password.'));
+		}
+		if (!is_numeric($file_id))
 			return array('error' => _gettext('Invalid file id'));
 		$postfile = $tc_db->GetAll("SELECT * FROM `".KU_DBPREFIX."postembeds` WHERE `file_id`=".$tc_db->qstr($file_id));
 		if (!$postfile)
 			return array('error' => _gettext('File does not exist.'));
 		$postfile = $postfile[0];
-		if ($postfile['file'] == 'removed')
+		if ($postfile['file'] == 'removed' || $postfile['IS_FILE_DELETED'] == 1)
 			return array(
 				'error' => false,
 				'already_deleted' => true
@@ -1122,12 +1142,10 @@ class Board {
 			$pass = md5($pass);
 		}
 
-		if (!$ismod && $postfile['password'] != $pass) {
-			return array('error' => _gettext('Incorrect password.'));
-		}
 		$erase = !$ismod && I0_ERASE_DELETED;
 		clearPostCache($postfile['id'], $this->board['name']);
-		$tc_db->Execute("UPDATE `".KU_DBPREFIX."files` SET `file`='removed'".
+		//$tc_db->Execute("UPDATE `".KU_DBPREFIX."files` SET `file`='removed'".
+		$tc_db->Execute("UPDATE `".KU_DBPREFIX."files` SET `IS_FILE_DELETED` = 1".
 			($erase ? $this::FILE_ERASE : '').
 			" WHERE `file_id`=".$tc_db->qstr($file_id));
 		$this->EraseFileAndThumbs($postfile);
@@ -1169,7 +1187,7 @@ class Post extends Board {
 	function __construct($postid, $board, $boardid, $is_inserting = false) {
 		global $tc_db;
 
-		$results = $tc_db->GetAll("SELECT * FROM `".KU_DBPREFIX."postembeds` WHERE `boardid` = '" . $boardid . "' AND `id` = ".$tc_db->qstr($postid));
+		$results = $tc_db->GetAll("SELECT * FROM `".KU_DBPREFIX."postembeds` WHERE `id` = ".$tc_db->qstr($postid)." AND `boardid` = '" . $boardid . "'");
 		$results = group_embeds($results);
 
 		if (count($results)==0&&!$is_inserting) {
@@ -1246,19 +1264,21 @@ class Post extends Board {
 			 FROM
 				`".KU_DBPREFIX."postembeds`
 			 WHERE
-				`boardid` = '" . $boardid . "'
-				AND (
+				(
 				 `id` = ".$tc_db->qstr($postid)."
 				 OR
 				 `parentid` = ".$tc_db->qstr($postid)."
-				)");
+				)
+				AND
+				`boardid` = '" . $boardid . "'
+				");
 
 			//Archiving. Probably does not work lol
 			if ($allow_archive && $this->board['enablearchiving'] == 1 && $this->board['loadbalanceurl'] == '') {
 				$this->ArchiveMode(true);
 				$this->RegenerateThreads($postid);
 				foreach($files as $file) {
-					if ($file['file'] != 'removed' && $file['file_size'] > 0) {
+					if (($file['file'] != 'removed' || $file['IS_FILE_DELETED'] != 1) && $file['file_size'] > 0) {
 						@copy(KU_BOARDSDIR . $boardname . '/src/' . $file['file'] . '.' . $file['filetype'], KU_BOARDSDIR . $boardname . $this->archive_dir . '/src/' . $file['file'] . '.' . $file['filetype']);
 						@copy(KU_BOARDSDIR . $boardname . '/thumb/' . $file['file'] . 's.' . $file['filetype'], KU_BOARDSDIR . $boardname . $this->archive_dir . '/thumb/' . $file['file'] . 's.' . $file['filetype']);
 					}
@@ -1302,9 +1322,10 @@ class Post extends Board {
 				`deleted_timestamp` = '" . time() . "'".
 				($erase ? $this::POST_ERASE : '')."
 			 WHERE
-				`boardid` = '" . $boardid . "'
+				`id` IN (".implode(',', $post_ids).")
 				AND
-				`id` IN (".implode(',', $post_ids).")");
+				`boardid` = '" . $boardid . "'
+				");
 			// Physically delete all files
 			/*foreach($files as $file) {
 				if ($file['file'] != 'removed' && $file['file_size'] > 0)
@@ -1313,9 +1334,10 @@ class Post extends Board {
 			// Clear reports
 			$tc_db->Execute("DELETE FROM `".KU_DBPREFIX."reports`
 			 WHERE
-				`boardid` = '" . $boardid . "'
+				`id` IN (".implode(',', $post_ids).")
 				AND
-				`id` IN (".implode(',', $post_ids).")");
+				`boardid` = '" . $boardid . "'
+				");
 
 			return (count($post_ids)+1).' '; // huh?
 		}
@@ -1332,9 +1354,10 @@ class Post extends Board {
 				`deleted_timestamp` = '" . time() . "'".
 				($erase ? $this::POST_ERASE : '')."
 			 WHERE
-				`boardid` = '" . $boardid . "'
+				`id` = ".$tc_db->qstr($postid)."
 				AND
-				`id` = ".$tc_db->qstr($postid));
+				`boardid` = '" . $boardid . "'
+				");
 			/*
 			if ($this->post['embeds']) {
 				// Mark files as removed in db
@@ -1355,21 +1378,21 @@ class Post extends Board {
 			$bumped = $tc_db->GetOne("SELECT `bumped`
 				FROM `".KU_DBPREFIX."posts`
 				WHERE
-				 `boardid`=".$boardid." 
-				 AND
-				 `id`=".$this->post['parentid']);
+				`id`=".$this->post['parentid']."
+				AND
+				`boardid`=".$boardid);
 			$bump = $tc_db->GetOne("SELECT `timestamp`
 				FROM `".KU_DBPREFIX."posts`
 				WHERE
-				 `boardid`=".$boardid." 
-				 AND
-				 (`id`=".$this->post['parentid']." 
-					OR 
-					`parentid`=".$this->post['parentid'].")
-				 AND
-				 `email`!='sage' 
-				 AND
-				 `IS_DELETED`=0
+				(`id`=".$this->post['parentid']." 
+				OR 
+				`parentid`=".$this->post['parentid'].") 
+				AND
+				`boardid`=".$boardid." 
+				AND
+				`email`!='sage' 
+				AND
+				`IS_DELETED`=0
 				ORDER BY `timestamp` DESC");
 			$unbumped = 1;
 			if ($bumped != $bump) {
@@ -1377,10 +1400,10 @@ class Post extends Board {
 				$tc_db->Execute("UPDATE `".KU_DBPREFIX."posts`
 				 SET `bumped`=?
 				 WHERE
-					`boardid`=? 
+					`id`=?
 					AND
-					`id`=?",
-				array($bump, $boardid, $this->post['parentid']) );
+					`boardid`=?",
+				array($bump, $this->post['parentid'], $boardid) );
 			}
 			
 			//clearPostCache($postid, $boardname);
@@ -1443,8 +1466,10 @@ class Post extends Board {
 			// Non-mysql installs don't return the insert ID after insertion, we need to manually get it.
 			$id = $tc_db->GetOne("SELECT `id`
 				FROM `".KU_DBPREFIX."posts`
-				WHERE `boardid` = ".$tc_db->qstr($boardid)."
-				AND timestamp = ".$tc_db->qstr($timestamp)."
+				WHERE
+				timestamp = ".$tc_db->qstr($timestamp)."
+				AND
+				`boardid` = ".$tc_db->qstr($boardid)."
 				AND `ipmd5` = '".md5($ip)."'
 				LIMIT 1");
 		}
@@ -1458,7 +1483,7 @@ class Post extends Board {
 		// Hash the delpass with id as a salt
 		if (I0_DELPASS_SALTING && $password != '') {
 			$passwordmd5salted = '+'.md5($password . $id . $boardid . KU_RANDOMSEED);
-			$tc_db->Execute("UPDATE `".KU_DBPREFIX."posts` SET `password`=? WHERE `boardid`=? AND `id`=?", array($passwordmd5salted, $boardid, $id));
+			$tc_db->Execute("UPDATE `".KU_DBPREFIX."posts` SET `password`=? WHERE `id`=? AND `boardid`=?", array($passwordmd5salted, $id, $boardid));
 		}
 
 		// Insert files
@@ -1522,8 +1547,9 @@ class Post extends Board {
 		$times = $tc_db->GetAll("SELECT `timestamp`, `deleted_timestamp`, `IS_DELETED`
 			FROM `".KU_DBPREFIX."posts`
 			WHERE 
-			 `boardid` = ".$boardid." AND 
-			 `id` = ".$postid);
+			`id` = ".$postid."
+			 AND 
+			 `boardid` = ".$boardid);
 		if (!$times) return false;
 		if ($times[0]['IS_DELETED'] == 1) {
 			return 'Post is already deleted.';
@@ -1535,8 +1561,9 @@ class Post extends Board {
 			SET
 			 `deleted_timestamp`=0
 			WHERE
-			 `boardid` = ".$boardid." AND 
-			 `id` = ".$postid);
+			 `id` = ".$postid."
+			 AND 
+			 `boardid` = ".$boardid);
 		return $result==false ? false : true;
 	}
 }

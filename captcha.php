@@ -40,8 +40,8 @@ function warped_image($tmpimg, $img)
 			$py[$i] = rand(0, $height);
 		} while ($py[$i] >= $height*0.3 && $py[$i] <= $height*0.7);
 
-		$rad[$i] = rand($width*0.4, $width*0.8);
-		$amp[$i] = -0.0001 * rand(0,9999) * 0.15 - 0.15;
+		$rad[$i] = rand($width*0.4, $width*1.2);
+		$amp[$i] = -0.0001 * rand(1000,3000) * 0.15 - 0.15;
 	}
 
 	// get img properties bgcolor
@@ -82,14 +82,32 @@ function warped_image($tmpimg, $img)
 	}
 }
 
+/*function frand($min, $max, $decimals = 0) {
+	$scale = pow(10, $decimals);
+	return mt_rand($min * $scale, $max * $scale) / $scale;
+}*/
+
+function frand2() {
+	return 0.0001 * rand(0,9999);
+}
+
+
+$perturbation = 1.0; // bigger numbers give more distortion; 1 is standard
+$imgwid = $canvas_width+1000; // image width, pixels
+$imghgt = $canvas_height; // image height, pixels
+$numcirc = 4; // number of wobbly circles
+$numlines = 3; // number of lines
+
+//$imgwid = 4000;
 // wiggly random line centered at specified coordinates
 function randomline($img, $col, $x, $y) {
 	$theta = (frand()-0.5)*M_PI*0.7;
 	global $imgwid;
 	$len = rand($imgwid*0.4,$imgwid*0.7);
-	$lwid = rand(0,2);
+	$lwid = rand(4,5);
 
-	$k = frand()*0.6+0.2; $k = $k*$k*0.5;
+	$k = frand()*0.6+0.2; 
+	$k = $k*$k*0.5;
 	$phi = frand()*6.28;
 	$step = 0.5;
 	$dx = $step*cos($theta);
@@ -102,8 +120,8 @@ function randomline($img, $col, $x, $y) {
 	$ldx = round(-$dy*$lwid);
 	$ldy = round($dx*$lwid);
 	for ($i = 0; $i < $n; ++$i) {
-	$x = $x0+$i*$dx + $amp*$dy*sin($k*$i*$step+$phi);
-	$y = $y0+$i*$dy - $amp*$dx*sin($k*$i*$step+$phi);
+		$x = $x0+$i*$dx + $amp*$dy*sin($k*$i*$step+$phi);
+		$y = $y0+$i*$dy - $amp*$dx*sin($k*$i*$step+$phi);
 		imagefilledrectangle($img, $x, $y, $x+$lwid, $y+$lwid, $col);
 	}
 }
@@ -193,7 +211,7 @@ function img_code($code) {
 			imagettftext ($im, $size, $rot, $x + $offset_x, $y, $color, $fname, $letter);
 		}
 		for ($i=0; $i<$lines; $i++) {
-			imageline($im, rand(0, 30), rand(0, 70), rand(120, 150), rand(0, 70), $color);
+			imagelinethick($im, rand(0, 30), rand(0, 70), rand(120, 150), rand(0, 70), $color);
 		}
 		$im=opsmaz($im,$scolor);
 	} else {
@@ -219,12 +237,34 @@ function img_code($code) {
 		$x = floor($width - $tx/2 - $bb[0]);
 		$y = round($height - $ty/2 - $bb[1]);
 		imagettftext($im, $fsize, 0, $x, $y, -$col, $font, $code);
+
+		/*
+		$size = from_range($font['size']);
+		$space = from_range($font["letter_spacing"], true)*$size;
+		for($i = 0; $i < mb_strlen($code); $i++) {
+			$letter=mb_substr($code, $i, 1);
+			$tx = $bb[4]-$bb[0];
+			$ty = $bb[5]-$bb[1];
+			$x = floor($width - $tx/2 - $bb[0]);
+			$y = round($height - $ty/2 - $bb[1]);
+			imagettftext($im, $fsize, 0, $x+($space*($i+10)), $y, -$col, $font, $letter);
+		}*/
+
+
+		//imagewobblecircle($im, $x, $y, $r=20, $wid=150, $amp=5, $num=1, $col)
+		if (KU_CAPTCHACIRCLE) {
+			imagewobblecircle($im, $x, $y, 20, 3, 5, 1, $col);
+		}
+		//imagewobblecircle($im, $x, $y-20, 20, 20, 4, 1, $col);
+		
 		for ($i=0; $i<$lines; $i++) {
-			imagelinethick($im, rand(0, 30), rand(0, 70), rand(120, 150), rand(0, 70), $col, 5);
+			//imagelinethick($im, rand(0, 30), rand(0, 70), rand(120, 150), rand(0, 70), $col, 5);
+			randomline($im, $col, $x, $y);
 		}
 
 		// warp text
 		warped_image($im, $img);
+
 	}
 
 
@@ -328,15 +368,16 @@ if (isset($_GET['switch'])) {
 
 // Generate the word
 $ltrs = KU_CAPTCHALENGTH;
-
-if($captchalang == 'en') 
+if($captchalang == 'en') {
 	$captcha = english_word($ltrs);
-elseif($captchalang == 'ru')
-	$captcha = generate_code($ltrs);	
-else {
-	for ($i=0; $i < $ltrs; $i++) { 
+} elseif ($captchalang == 'ru') {
+	$captcha = generate_code($ltrs);
+} else {
+	$captcha = generate_code($ltrs);
+	// слишком легко
+	/*for ($i=0; $i < $ltrs; $i++) {
 		$captcha .= rand(0, 9);
-	}
+	}*/
 }
 //$captcha = generate_code($ltrs);
 

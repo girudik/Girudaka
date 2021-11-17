@@ -13,9 +13,13 @@ function checkMd5($md5, $board, $boardid) {
 		AND `file_md5` = ".$tc_db->qstr($md5)." LIMIT 1");*/
 	$matches = $tc_db->GetAll("SELECT `id`, `parentid`, `file`, `file_size`, `file_size_formatted`, `image_w`, `image_h`, `thumb_w`, `thumb_h`, `file_original`
 		FROM `".KU_DBPREFIX."postembeds` 
-		WHERE `boardid` = " . $boardid . " 
-		AND `file` != 'removed' 
-		AND `file_md5` = ".$tc_db->qstr($md5)." LIMIT 1");
+		WHERE 
+		`file_md5` = ".$tc_db->qstr($md5)."
+		AND
+		`file` != 'removed'
+		AND
+		`boardid` = " . $boardid . "
+		LIMIT 1");
 	if (count($matches) > 0) {
 		$r = $matches[0];
 		if ($r['parentid'] == 0)
@@ -432,7 +436,7 @@ function TrimToPageLimit($board) {
 	if ($board['maxage'] != 0) {
 		// If the maximum thread age setting is not zero (do not delete old threads), find posts which are older than the limit, and delete them
 		//$results = $tc_db->GetAll("SELECT `id`, `timestamp` FROM `".KU_DBPREFIX."posts` WHERE `boardid` = " . $board['id'] . " AND `IS_DELETED` = 0 AND `parentid` = 0 AND `stickied` = 0 AND ((`timestamp` + " . ($board['maxage']*3600) . ") < " . time() . ")");
-		$results = $tc_db->GetAll("SELECT `id`, `timestamp` FROM `".KU_DBPREFIX."posts` WHERE `boardid` = " . $board['id'] . " AND `parentid` = 0 AND `stickied` = 0 AND ((`timestamp` + " . ($board['maxage']*3600) . ") < " . time() . ")");
+		$results = $tc_db->GetAll("SELECT `id`, `timestamp` FROM `".KU_DBPREFIX."posts` WHERE `parentid` = 0 AND ((`timestamp` + " . ($board['maxage']*3600) . ") < " . time() . ") AND `IS_DELETED` = 0 `stickied` = 0 AND `boardid` = " . $board['id']);
 		foreach($results AS $line) {
 			// If it is older than the limit
 			$post_class = new Post($line['id'], $board['name'], $board['id']);
@@ -442,24 +446,27 @@ function TrimToPageLimit($board) {
 	if ($board['maxpages'] != 0) {
 		// If the maximum pages setting is not zero (do not limit pages), find posts which are over the limit, and delete them
 		//$results = $tc_db->GetAll("SELECT `id`, `stickied` FROM `".KU_DBPREFIX."posts` WHERE `boardid` = " . $board['id'] . " AND `IS_DELETED` = 0 AND `parentid` = 0");
-		$results = $tc_db->GetAll("SELECT `id`, `stickied` FROM `".KU_DBPREFIX."posts` WHERE `boardid` = " . $board['id'] . " AND `parentid` = 0");
+		$results = $tc_db->GetAll("SELECT `id`, `stickied` FROM `".KU_DBPREFIX."posts` WHERE `parentid` = 0 AND `IS_DELETED` = 0 AND `boardid` = " . $board['id']);
 		$results_count = count($results);
+		prof_flag("t2-1");
 		if (calculatenumpages($results_count) >= $board['maxpages']) {
 			$board['maxthreads'] = ($board['maxpages'] * KU_THREADS);
 			$numthreadsover = ($results_count - $board['maxthreads']);
 			if ($numthreadsover > 0) {
 				//$resultspost = $tc_db->GetAll("SELECT `id`, `stickied` FROM `".KU_DBPREFIX."posts` WHERE `boardid` = " . $board['id'] . " AND `IS_DELETED` = 0 AND `parentid` = 0 AND `stickied` = 0 ORDER BY `bumped` ASC LIMIT " . $numthreadsover);
-				$resultspost = $tc_db->GetAll("SELECT `id`, `stickied` FROM `".KU_DBPREFIX."posts` WHERE `boardid` = " . $board['id'] . " AND `parentid` = 0 AND `stickied` = 0 ORDER BY `bumped` ASC LIMIT " . $numthreadsover);
+				$resultspost = $tc_db->GetAll("SELECT `id`, `stickied` FROM `".KU_DBPREFIX."posts` WHERE `parentid` = 0 AND `IS_DELETED` = 0 AND `stickied` = 0 AND `boardid` = " . $board['id'] . " ORDER BY `bumped` ASC LIMIT " . $numthreadsover);
+				prof_flag("t2-2");
 				foreach($resultspost AS $linepost) {
 					$post_class = new Post($linepost['id'], $board['name'], $board['id']);
 					$post_class->Delete(true);
 				}
+				prof_flag("t2-3");
 			}
 		}
 	}
 	// If the thread was marked for deletion more than two hours ago, delete it
 	//$results = $tc_db->GetAll("SELECT `id` FROM `".KU_DBPREFIX."posts` WHERE `boardid` = " . $board['id'] . " AND `IS_DELETED` = 0 AND `parentid` = 0 AND `stickied` = 0 AND `deleted_timestamp` > 0 AND (`deleted_timestamp` <= " . time() . ")");
-	$results = $tc_db->GetAll("SELECT `id` FROM `".KU_DBPREFIX."posts` WHERE `boardid` = " . $board['id'] . " AND `parentid` = 0 AND `stickied` = 0 AND `deleted_timestamp` > 0 AND (`deleted_timestamp` <= " . time() . ")");
+	$results = $tc_db->GetAll("SELECT `id` FROM `".KU_DBPREFIX."posts` WHERE `deleted_timestamp` > 0 AND (`deleted_timestamp` <= " . time() . ") AND `parentid` = 0 AND `stickied` = 0 AND `IS_DELETED` = 0 AND `boardid` = " . $board['id']);
 	foreach($results AS $line) {
 		// If it is older than the limit
 		$post_class = new Post($line['id'], $board['name'], $board['id']);

@@ -76,9 +76,10 @@
 					<div class="rotting-indicator"></div>
 					<div class="rotten-msg msg">{t}Captcha has expired{t}.</div>
 				</div>
-				<noscript><iframe class="captchawrap" src="{%KU_BOARDSFOLDER}nojscaptcha.php" frameborder="0" width="150" height="32" style="vertical-align: middle;"></iframe></noscript>
+				<noscript><iframe class="captchawrap" src="{%KU_BOARDSFOLDER}nojscaptcha.php" frameborder="0" width="175" height="58" style="vertical-align: middle;"></iframe></noscript>
 			</nobr></td>
 		</tr>
+		<tr><td></td><td><span style="display: block;">Вводите из капчи только зашумленные буквы!</span></td></tr>
 		{/if}
 		<input type="hidden" name="legacy-posting" value="1" />
 		{if $board.filetypes_allowed}

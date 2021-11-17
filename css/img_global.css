@@ -435,6 +435,9 @@ pre {
   text-align: center;
   white-space: nowrap;
 }
+.userdelete {
+  z-index: 1;
+}
 
 .userdelete td {
   display: -webkit-box;
@@ -3865,14 +3868,21 @@ input[name=postpassword] + div {
 /* bin stuff (deleted threads, posts) */
 details {
 	display: inline-block;
-  vertical-align: top;
-  margin-bottom: 10px;
+	vertical-align: top;
+	margin-bottom: 10px;
 }
 details[open] {
 	background: #ff000026;
 	padding: 2px 4px 0 0px;
 	border-radius: 4px;
 }
+details > div {
+	display: none; visibility: hidden; pointer-events: none;
+}
+details[open] > div {
+	display: block; visibility: visible; pointer-events: all;
+}
+
 summary.deleted {
 	-webkit-appearance: none;
 	-moz-appearance: none;
@@ -3895,4 +3905,9 @@ summary.deleted {
 	overflow: auto;
 	max-height: 500px;
 	width: 100%;
+}
+
+input[name=captcha]::placeholder {
+  color: red;
+  font-weight: bold;
 }

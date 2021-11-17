@@ -136,11 +136,12 @@ function group_embeds($r, $group_deleted_files = false) {
 			unset($rg[$i]['thumb_w']);
 			unset($rg[$i]['thumb_h']);
 			unset($rg[$i]['spoiler']);
+			unset($rg[$i]['IS_FILE_DELETED']);
 			$current_id = $id;
 		}
 		if ($pe['file']) {
 			if ($group_deleted_files) {
-				if ($pe['file'] == 'removed') {
+				if ($pe['file'] == 'removed' || $pe['IS_FILE_DELETED'] == 1) {
 					if ($rg[$i]['deleted_files']) {
 						$rg[$i]['deleted_files']++;
 					}
@@ -161,7 +162,8 @@ function group_embeds($r, $group_deleted_files = false) {
 				'image_h' => $pe['image_h'],
 				'thumb_w' => $pe['thumb_w'],
 				'thumb_h' => $pe['thumb_h'],
-				'spoiler' => $pe['spoiler']
+				'spoiler' => $pe['spoiler'],
+				'IS_FILE_DELETED' => $pe['IS_FILE_DELETED']
 			);
 		}
 	}

@@ -69,13 +69,13 @@ class Posting {
 			}
 			else {
 				// Check if the user has created any threads on this board
-				$any_threads = $tc_db->GetOne("SELECT COUNT(*) FROM `" . KU_DBPREFIX . "posts` WHERE `boardid`=? AND `parentid`='0' AND `ipmd5`=? LIMIT 1",
-					array($board_class->board['id'], $this->user_id_md5));
+				$any_threads = $tc_db->GetOne("SELECT COUNT(*) FROM `" . KU_DBPREFIX . "posts` WHERE `parentid`='0' AND `ipmd5`=? AND `boardid`=? LIMIT 1",
+					array($this->user_id_md5, $board_class->board['id']));
 				if ($any_threads)
 					$this->is_new_user = false;
 				elseif (I0_REPLIES_TO_RECOGNIZE) { // Check if the user has created a sufficient number of posts on this board
-					$post_count = $tc_db->GetOne("SELECT COUNT(*) FROM `" . KU_DBPREFIX . "posts` WHERE `boardid`=? AND `ipmd5`=? LIMIT ?",
-						array($board_class->board['id'], $this->user_id_md5, I0_REPLIES_TO_RECOGNIZE));
+					$post_count = $tc_db->GetOne("SELECT COUNT(*) FROM `" . KU_DBPREFIX . "posts` WHERE `ipmd5`=? AND `boardid`=? LIMIT ?",
+						array($this->user_id_md5, $board_class->board['id'], I0_REPLIES_TO_RECOGNIZE));
 					$this->is_new_user = ($post_count < I0_REPLIES_TO_RECOGNIZE);
 				}
 				else
@@ -105,11 +105,11 @@ class Posting {
 			$result = $tc_db->GetOne("SELECT MAX(timestamp) 
 				FROM `" . KU_DBPREFIX . "posts` 
 				WHERE 
-					`boardid` = " . $board_class->board['id'] . " 
-					AND 
+					`timestamp` > " . ($this->now - KU_REPLYDELAY)."
+					AND
 					`ipmd5` = '" . $this->user_id_md5 . "' 
-					AND 
-					`timestamp` > " . ($this->now - KU_REPLYDELAY));
+					AND
+					`boardid` = " . $board_class->board['id']);
 			if ($result) {
 				$delta = KU_REPLYDELAY - ($this->now - $result);
 			}
@@ -140,13 +140,13 @@ class Posting {
 			$result = $tc_db->GetOne("SELECT MAX(timestamp) 
 				FROM `" . KU_DBPREFIX . "posts` 
 				WHERE 
-					`boardid` = " . $board_class->board['id'] . " 
-					AND 
+					`timestamp` > " . ($this->now - I0_GLOBAL_NEWTHREADDELAY)."
+					AND
 					`parentid` = 0 
 					AND 
-					`by_new_user` = '1'
-					AND 
-					`timestamp` > " . ($this->now - I0_GLOBAL_NEWTHREADDELAY));
+					`boardid` = " . $board_class->board['id'] . " 
+					AND
+					`by_new_user` = '1'");
 			if ($result) {
 				exitWithErrorPage(sprintf(_gettext('Please wait %d s before posting again.'), I0_GLOBAL_NEWTHREADDELAY - ($this->now - $result)), 
 					_gettext('Global new thread delay for new users is imposed.'));
@@ -173,13 +173,13 @@ class Posting {
 				$result = $tc_db->GetOne("SELECT MAX(timestamp) 
 					FROM `" . KU_DBPREFIX . "posts` 
 					WHERE 
-						`boardid` = " . $board_class->board['id'] . " 
+						`timestamp` > " . ($this->now - KU_NEWTHREADDELAY)."
 						AND 
 						`parentid` = 0 
 						AND 
 						`ipmd5` = '" . $this->user_id_md5 . "' 
-						AND 
-						`timestamp` > " . ($this->now - KU_NEWTHREADDELAY));
+						AND
+						`boardid` = " . $board_class->board['id']);
 				if ($result) {
 					$delta = KU_NEWTHREADDELAY - ($this->now - $result);
 				}
@@ -305,7 +305,7 @@ class Posting {
 			if ($_POST['replythread'] != '0') {
 				/* Check if the thread id supplied really exists */
 				//$results = $tc_db->GetOne("SELECT COUNT(*) FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $board_class->board['id'] . " AND `IS_DELETED` = '0' AND `id` = " . $tc_db->qstr($_POST['replythread']) . " AND `parentid` = '0' LIMIT 1");
-				$results = $tc_db->GetOne("SELECT COUNT(*) FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $board_class->board['id'] . " AND `id` = " . $tc_db->qstr($_POST['replythread']) . " AND `parentid` = '0' LIMIT 1");
+				$results = $tc_db->GetOne("SELECT COUNT(*) FROM `" . KU_DBPREFIX . "posts` WHERE `id` = " . $tc_db->qstr($_POST['replythread']) . " AND `parentid` = '0' AND `boardid` = " . $board_class->board['id'] . " LIMIT 1");
 				/* If it does... */
 				if ($results > 0) {
 					return true;
@@ -334,7 +334,7 @@ class Posting {
 
 		/* Check if the thread id supplied really exists and if it is locked */
 		//$results = $tc_db->GetAll("SELECT `id`,`locked` FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $board_class->board['id'] . " AND `IS_DELETED` = '0' AND `id` = " . $tc_db->qstr($id) . " AND `parentid` = '0'");
-		$results = $tc_db->GetAll("SELECT `id`,`locked` FROM `" . KU_DBPREFIX . "posts` WHERE `boardid` = " . $board_class->board['id'] . " AND `id` = " . $tc_db->qstr($id) . " AND `parentid` = '0'");
+		$results = $tc_db->GetAll("SELECT `id`,`locked` FROM `" . KU_DBPREFIX . "posts` WHERE `id` = " . $tc_db->qstr($id) . " AND `parentid` = '0' AND `boardid` = " . $board_class->board['id']);
 		/* If it does... */
 		if (count($results) > 0) {
 			/* Get the thread's info */
@@ -342,7 +342,7 @@ class Posting {
 			$thread_replyto = $results[0]['id'];
 			/* Get the number of replies */
 			//$result = $tc_db->GetOne("SELECT COUNT(id) FROM `" . KU_DBPREFIX ."posts` WHERE `boardid` = " . $board_class->board['id'] . " AND `IS_DELETED` = '0' AND `parentid` = " . $tc_db->qstr($id) . "");
-			$result = $tc_db->GetOne("SELECT COUNT(id) FROM `" . KU_DBPREFIX ."posts` WHERE `boardid` = " . $board_class->board['id'] . " AND `parentid` = " . $tc_db->qstr($id) . "");
+			$result = $tc_db->GetOne("SELECT COUNT(id) FROM `" . KU_DBPREFIX ."posts` WHERE `parentid` = " . $tc_db->qstr($id) . "AND `boardid` = " . $board_class->board['id']);
 			$thread_replies = $result;
 
 			return array($thread_replies, $thread_locked, $thread_replyto);
@@ -489,8 +489,10 @@ class Posting {
 
 		if(!strlen($msg)) return;
 
-		$lastmsg = $tc_db->GetAll("SELECT `message` FROM `".KU_DBPREFIX."posts` WHERE  `ipmd5` = '" . $this->user_id_md5 . "' AND `boardid`='".$boardid."' ORDER BY `timestamp` DESC LIMIT 1");
-		$lastmsg = mb_strtolower(strip_tags(str_replace($cyr, $lat, $lastmsg[0][0])));
+		//$lastmsg = $tc_db->GetAll("SELECT `message` FROM `".KU_DBPREFIX."posts` WHERE  `ipmd5` = '" . $this->user_id_md5 . "' AND `boardid`='".$boardid."' ORDER BY `timestamp` DESC LIMIT 1");
+		$lastmsg = $tc_db->GetOne("SELECT `message` FROM `".KU_DBPREFIX."posts` WHERE `timestamp` > " . (time() - 86400) . " AND `boardid`='".$boardid."' AND `ipmd5` = '" . $this->user_id_md5 . "' ORDER BY `timestamp` DESC");
+		//$lastmsg = mb_strtolower(strip_tags(str_replace($cyr, $lat, $lastmsg[0][0])));
+		$lastmsg = mb_strtolower(strip_tags(str_replace($cyr, $lat, $lastmsg)));
 
 		if($msg == $lastmsg) exitWithErrorPage(_gettext('Flood Detected'), _gettext('You are posting the same message again.'));
 

@@ -142,7 +142,8 @@ if (!$manage_class->ValidateSession(true)) {
 			}
 		}
 		//$open_reports = $tc_db->GetAll("SELECT HIGH_PRIORITY COUNT(*) FROM `" . KU_DBPREFIX . "reports` WHERE `cleared` = '0' and `board` IN (". implode(",", $allowboards) .");");
-		$open_reports = $tc_db->GetAll("SELECT HIGH_PRIORITY COUNT(*) FROM `" . KU_DBPREFIX . "reports` AS r JOIN `" . KU_DBPREFIX . "posts` AS p ON r.postid = p.id WHERE `cleared` = '0' and `board` IN (". implode(",", $allowboards) .");");
+		//$open_reports = $tc_db->GetAll("SELECT HIGH_PRIORITY COUNT(*) FROM `" . KU_DBPREFIX . "reports` AS r JOIN `" . KU_DBPREFIX . "posts` AS p ON r.postid = p.id WHERE `cleared` = '0' and `board` IN (". implode(",", $allowboards) .");"); // join is sucks
+		$open_reports = $tc_db->GetAll("SELECT HIGH_PRIORITY COUNT(id) FROM `" . KU_DBPREFIX . "posts` WHERE id IN (SELECT postid FROM `" . KU_DBPREFIX . "reports` WHERE cleared = 0 and board IN (". implode(",", $allowboards) ."));");
 		$tpl_links .= section_html(_gettext('Moderation'), 'moderation') .
 		'<ul>
 		<li><a href="manage_page.php?action=reports">' . _gettext('View Reports') . ' [' . $open_reports[0][0] . ']</a></li>

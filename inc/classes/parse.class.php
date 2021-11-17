@@ -254,7 +254,7 @@ class Parse {
 		if (in_array(strtoupper($matches[1]), array('OP', 'ОП'))) 
 			$matches[1] = $this->parentid;
 		if (is_numeric($matches[1])) {
-			$result = $tc_db->GetAll("SELECT `parentid`, `ipmd5` FROM `".KU_DBPREFIX."posts` WHERE `boardid` = " . $this->boardid . " AND `id` = ".$tc_db->qstr($matches[1]));
+			$result = $tc_db->GetAll("SELECT `parentid`, `ipmd5` FROM `".KU_DBPREFIX."posts` WHERE `id` = ".$tc_db->qstr($matches[1])." AND `boardid` = " . $this->boardid);
 			if(count($result) > 0) {
 				$result = $result[0];
 				$proven = ($result['ipmd5'] == $this->ipmd5) ? 'proven' : 'disproven';
@@ -275,7 +275,7 @@ class Parse {
 
 		$result = $tc_db->GetAll("SELECT `id`, `type` FROM `".KU_DBPREFIX."boards` WHERE `name` = ".$tc_db->qstr($matches[1])."");
 		if ($result[0]["type"] != '') {
-			$result2 = $tc_db->GetAll("SELECT `parentid`, `ipmd5` FROM `".KU_DBPREFIX."posts` WHERE `boardid` = " . $result[0]['id'] . " AND `id` = ".$tc_db->qstr($matches[2])."");
+			$result2 = $tc_db->GetAll("SELECT `parentid`, `ipmd5` FROM `".KU_DBPREFIX."posts` WHERE `id` = ".$tc_db->qstr($matches[2])." AND `boardid` = " . $result[0]['id']);
 			if(count($result2) > 0) {
 				$result2 = $result2[0];
 				$proven = ($result2['ipmd5'] == $this->ipmd5) ? 'proven' : 'disproven';

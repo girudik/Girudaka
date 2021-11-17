@@ -59,7 +59,7 @@ function movethread($board_from, $board_to, $thread_from) {
 
 	$tc_db->SetFetchMode(ADODB_FETCH_ASSOC);
 	$tc_db->Execute("START TRANSACTION");
-	$postembeds = $tc_db->GetAll("SELECT `id`, `file_id`, `file`, `file_type`, `file_size_formatted`
+	$postembeds = $tc_db->GetAll("SELECT *
 		FROM `" . KU_DBPREFIX . "postembeds`
 		WHERE
 			`boardid`=$board_from_id
