@@ -11,12 +11,13 @@ class Parse {
 
 
 	function urlcallback($matches) {
-		return '<a target="_blank" rel="nofollow noopener noreferrer" href="'.$matches[1].$matches[2].'">'.$matches[1].urldecode($matches[2]).'</a>';
+		//return '<a target="_blank" rel="nofollow noopener noreferrer" href="'.$matches[1].$matches[2].'">'.$matches[1].urldecode($matches[2]).'</a>';
+		return '<a target="_blank" class="internal" rel="nofollow noopener noreferrer" href="'.$matches[1].$matches[2].'">'.$matches[1].$matches[2].'</a>';
 	}
 
 	function exturlcallback($matches) {
-		$text = strtr(urldecode($matches[1]), array('/' => '&#47;'));
-		return '<a target="_blank" rel="nofollow noopener noreferrer" href="'.$matches[2].$matches[3].'">'.$text.'</a>';
+		$text = strtr(urldecode($matches[1]), array('/' => '&#47;', '%' => '%25;'));
+		return '<a target="_blank" class="external" rel="nofollow noopener noreferrer" href="'.$matches[2].$matches[3].'">'.$text.'</a>';
 	}
 
 	function MakeClickable($txt) {
