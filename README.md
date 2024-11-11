@@ -2,8 +2,7 @@
   <img src="https://github.com/user-attachments/assets/c6e63567-d544-4090-b2c5-27f60b69368b" alt="Instant 0chan"/>
 </p>
 
-# aka Instant 0chan ver 3.0
-Ака (почти) переписаный инстант нульчан.
+(почти) переписаный инстант нульчан.
 
 ## TODO
 - [ ] Разделить логику борды на Н-Х-Ц (MVC)
@@ -72,3 +71,7 @@ npm install
 npm audit fix #(если потребует)
 npm run-script build
 ```
+
+<p align="center">
+   <img src="https://github.com/user-attachments/assets/b77fdc1b-2c31-4999-90a9-e699f5a968f6"/>
+</p>
