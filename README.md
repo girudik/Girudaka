@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="https://imgur.com/pqlzbHv" alt="Instant 0chan"/>
+  <img src="https://github.com/user-attachments/assets/c6e63567-d544-4090-b2c5-27f60b69368b" alt="Instant 0chan"/>
 </p>
 
-# Instant 0chan
-Лучше использовать [витчечухан](https://github.com/lainchan/lainchan).
+# aka Instant 0chan ver 3.0
+Ака (почти) переписаный инстант нульчан.
 
 ## TODO
 - [ ] Разделить логику борды на Н-Х-Ц (MVC)
